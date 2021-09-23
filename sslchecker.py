@@ -15,9 +15,9 @@ except ImportError:
     print('Please install required modules: pip install -r requirements.txt')
     sys.exit(1)
 
-
+# 2 to worked
 def SendEmail(host, valid_days_to_expire):
-    url = "URL_TO_API"
+   """ url = "URL_TO_API"
     r = requests.post(url, data={
         "host": host,
         "valid_days_to_expire": valid_days_to_expire
@@ -35,6 +35,8 @@ def SendEmail(host, valid_days_to_expire):
         "Content-type": "application/json",
         "Authorization": "Bearer TOKEN"},
          data=json.dumps(data))
+         """
+
 
 
 
@@ -242,6 +244,7 @@ class SSLChecker:
 
     def show_result(self, user_args):
         """Get the context."""
+        print(user_args)
         context = {}
         start_time = datetime.now()
         hosts = user_args.hosts
@@ -353,9 +356,8 @@ class SSLChecker:
         """Set argparse options."""
         parser = ArgumentParser(prog='ssl_checker.py', add_help=False,
                                 description="""Collects useful information about given host's SSL certificates.""")
-
         if len(json_args) > 0:
-            args = parser.parse_args()
+            args, unknown = parser.parse_known_args()
             setattr(args, 'json_true', True)
             setattr(args, 'verbose', False)
             setattr(args, 'csv_enabled', False)
