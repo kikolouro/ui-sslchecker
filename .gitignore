@@ -1,3 +1,4 @@
 __pycache__
 hosts*.*
+!hosts.html
 config.yaml

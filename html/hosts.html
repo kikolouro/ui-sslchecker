@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <script>
     var token;
@@ -244,19 +244,21 @@
 
 
 <header>
-    <nav class="navbar navbar-dark bg-dark">
+    <nav class="navbar navbar-dark bg-dark" style="width: 100%;">
+        <a class="navbar-brand" href="#">
+            <img src="./images/logo-info-noslogan-web-neg.png" width="150" height="30" alt="">
+          </a>
         <ul style:  class="nav">
-            <li class="nav-item">
-                <a class="nav-link"  href="./newhosts.html">New Host</a>
+            <li class="nav-item active">
+                <a  class="nav-link" href="./hosts.html">Hosts</a>
             </li>
             <li class="nav-item">
-                <a  class="nav-link" href="./hosts.html">Hosts</a>
+                <a class="nav-link"  href="./newhosts.html">New Host</a>
             </li>
             <li class="nav-item">
                 <a  class="nav-link" href="./debugging.html">Debugging</a>
             </li>
           </ul>
-            </ul>
         <ul style:  class="nav mx-auto">
             <li class="nav-item">
                 <a class="nav-link" data-toggle="modal" data-target="#import" id="importbutton" href="#">Importar ficheiro de hosts</a>
@@ -265,6 +267,7 @@
                 <a download="hosts" class="nav-link" href="hosts">Exportar ficheiro de hosts</a>
             </li>
           </ul>
+
       </nav>
 </header>
 
@@ -274,25 +277,13 @@
 
 
 
-    <div class="container">
+    <div class="container-fluid pt-xl-5" style="width: 80%; height: 80%;">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Novo Host</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Host</h6>
             </div>
 
-            Stuff
-    
-        </div>
-    </div>
-
-
-
-
-
-    <div class="container">
-        <div class="row">
-            <div class="col-6" align="center">
-                <h1>Hosts</h1>
+            <div class="col-6 mx-auto p-4" align="center">
                 <ul class="list-group" id="hosts">
                     <?php
                     foreach ($hosts as $key => $value) {
@@ -385,27 +376,17 @@
                     ?>
                 </ul>
             </div>
-            <div class="col-6" align="center">
-                <h1>Novo Host</h1>
-                <form action="index.php?submit=" method="POST">
-                    <input class="form-control" type="text" name="newhost" placeholder="Novo Host" /><br>
-                    <button class="form-control btn btn-primary" type="Submit">Adicionar</button>
-                </form>
-            </div>
-        </div>
-        <br>
-        <div class="row">
-            <div class="col-3" align="center">
-                <h1>Correr Script</h1>
-                <a href="index.php?runscript" class="form-control btn btn-primary" type="submit">Correr Script</a>
-            </div>
-
-            <div class="col-9" align="center">
-                <h1>Output</h1>
-                <textarea class="form-control" rows="15" cols="50" id="textarea" readonly><?= $output ?></textarea>
-            </div>
+    
         </div>
     </div>
+
+
+
+
+
+
+
+            
     <div class="modal fade" id="import" tabindex="-1" role="dialog" aria-labelledby="import" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
