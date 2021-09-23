@@ -1,6 +1,6 @@
 import json, re, yaml
 from yaml.loader import SafeLoader
-
+import smtplib, ssl
 def readConfig(config_file="config.yaml"):
     with open(config_file) as f:
         data = yaml.load(f, Loader=SafeLoader)
@@ -44,3 +44,20 @@ def domainValidation(domain):
         else:
             return False
 
+def sendEmail(receiver, sender, host, daysleft, port=465, smtpserver='smtp.gmail.com'):
+    sender_email = sender['email']
+    password = sender['password']
+
+    message = f"""\
+    Certificado a expirar: {host}
+
+    O certificado está a expirar no host: {host}. Expira em {daysleft} dias.""".encode('utf-8')
+   
+    context = ssl.create_default_context()
+    
+    with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver, message)
+        return "Success"
+
+    

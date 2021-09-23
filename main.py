@@ -8,6 +8,7 @@ app.config.update(TEMPLATES_AUTO_RELOAD = True)
 yaml = functions.readConfig()
 configapp = yaml['app']
 configzabbix = yaml['zabbix']
+configemail = yaml['email']
 
 if configapp['env'] != 'dev':
     app.config['BASIC_AUTH_USERNAME'] = configapp['credentials']['username']
@@ -21,6 +22,10 @@ def runchecker():
     args = functions.getHosts()
     res = SSLChecker.show_result(SSLChecker.get_args(json_args=args))
     return res
+
+@app.route('/api/v1/sendemail', methods=['POST'])
+def sendemail():
+    return functions.sendEmail(configemail['receiver'], configemail['sender'], 'example.com', 30)
 
 @app.route("/api/v1/addhost", methods=['POST'])
 def addHost():
