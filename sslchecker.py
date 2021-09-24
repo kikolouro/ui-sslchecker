@@ -17,7 +17,7 @@ except ImportError:
 
 # 2 to worked
 def SendEmail(host, valid_days_to_expire):
-   """ url = "URL_TO_API"
+    url = "URL_TO_API"
     r = requests.post(url, data={
         "host": host,
         "valid_days_to_expire": valid_days_to_expire
@@ -28,18 +28,6 @@ def SendEmail(host, valid_days_to_expire):
     else:
         text = "O certificado está a expirar no host: {}. Falta {} Dias.".format(host, valid_days_to_expire)
         
-    url = "https://slack.com/api/chat.postMessage"
-    data = {"channel": "CHANNEL_NAME","text": text}
-
-    r = requests.post(url,headers={
-        "Content-type": "application/json",
-        "Authorization": "Bearer TOKEN"},
-         data=json.dumps(data))
-         """
-
-
-
-
 class SSLChecker:
 
     total_valid = 0

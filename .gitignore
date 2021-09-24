@@ -1,4 +1,6 @@
 __pycache__
 hosts*.*
-!hosts.html
 config.yaml
+!hosts.html
+data.json
+yoyo.json

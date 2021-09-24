@@ -1,6 +1,6 @@
-import json, re, yaml
+import json, re, yaml, os, smtplib, ssl
 from yaml.loader import SafeLoader
-import smtplib, ssl
+
 def readConfig(config_file="config.yaml"):
     with open(config_file) as f:
         data = yaml.load(f, Loader=SafeLoader)
@@ -60,4 +60,22 @@ def sendEmail(receiver, sender, host, daysleft, port=465, smtpserver='smtp.gmail
         server.sendmail(sender_email, receiver, message)
         return "Success"
 
-    
+def allowed_file(filename, ALLOWED_EXTENSIONS):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def jsonfileValidation(obj):
+    if 'hosts' not in obj:
+        return False
+    return True
+
+def changeHostFile(obj, filename='hosts.json'):
+    if jsonfileValidation(obj):
+        open(filename, 'w').close()
+        with open(filename, 'w') as File:
+            json.dump(obj, File, indent = 4)
+        filelist = [ f for f in os.listdir('temp')]
+        for f in filelist:
+            os.remove(os.path.join('temp', f))
+        return "Success"
+

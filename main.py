@@ -1,8 +1,13 @@
+from re import T
 from sslchecker import SSLChecker
-from flask import Flask, request, render_template, send_from_directory
+from flask import Flask, request, render_template, send_from_directory, redirect
 from flask_basicauth import BasicAuth
+from werkzeug.utils import secure_filename
 import functions
-app = Flask(__name__, template_folder='static')
+import os, json
+app = Flask(__name__, template_folder='html')
+app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, './temp')
+ALLOWED_EXTENSIONS = {'json'}
 app.config.update(TEMPLATES_AUTO_RELOAD = True)
 
 yaml = functions.readConfig()
@@ -16,12 +21,26 @@ if configapp['env'] != 'dev':
     app.config['BASIC_AUTH_FORCE'] = True
     basic_auth = BasicAuth(app)
 
+@app.route("/api/v1/uploadhosts", methods=['POST'])
+def upload():
+    if 'file' not in request.files:
+        return '{"error":"Nenhum ficheiro enviado."}'
+    file = request.files['file']
+    if file.filename == '':
+        return '{"error":"Nenhum ficheiro enviado."}'
+    if file and functions.allowed_file(file.filename, ALLOWED_EXTENSIONS):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        with open(f"{app.config['UPLOAD_FOLDER']}/{filename}", "r") as File:
+            var = json.load(File)
+            functions.changeHostFile(var)
+        return redirect("/")
 
 @app.route("/api/v1/runchecker", methods=['POST'])
 def runchecker():
     args = functions.getHosts()
     res = SSLChecker.show_result(SSLChecker.get_args(json_args=args))
-    return res
+    return json.loads(res)
 
 @app.route('/api/v1/sendemail', methods=['POST'])
 def sendemail():
@@ -39,6 +58,11 @@ def addHost():
     else:
         return "Wrong domain format"
 
+@app.route("/v1/api/gethostfile")
+def gethostfile():
+    uploads = os.path.join(app.root_path, '.')
+    return send_from_directory(uploads, 'hosts.json', as_attachment=True)
+
 @app.route("/api/v1/delhost", methods=['POST'])
 def delHost():
     host = request.form['host']
@@ -53,7 +77,14 @@ def delHost():
 
 @app.route("/")
 def root():
-    
-    return render_template('index.html')
+    return render_template('index.html', hosts = functions.getHosts()['hosts'])
+
+@app.route("/newhosts")
+def newhost():
+    return render_template('newhosts.html')
+
+@app.route("/debugging")
+def debugging():
+    return render_template("debugging.html")
 
 SSLChecker = SSLChecker()
