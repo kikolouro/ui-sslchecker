@@ -7,3 +7,4 @@ gunicorn
 pyyaml
 flask_basicauth
 ssl
+pyzabbix

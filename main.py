@@ -77,7 +77,7 @@ def delHost():
 
 @app.route("/")
 def root():
-    return render_template('index.html', hosts = functions.getHosts()['hosts'])
+    return render_template('index.html', hosts = functions.getHosts()['hosts'], data = functions.getData())
 
 @app.route("/newhosts")
 def newhost():

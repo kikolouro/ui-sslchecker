@@ -12,6 +12,19 @@ def getHosts(hosts_file="hosts.json"):
     json_file.close()
     return var
 
+def getData(hosts_file="data.json"):
+    json_file = open(hosts_file)
+    hosts = json.load(json_file)
+    json_file.close()
+    var = {}
+    for host in hosts:
+        var[host] = {}
+        var[f'{host}']['cert'] = hosts[host]['cert_valid']
+        var[host]['daystoexpire'] = hosts[host]['valid_days_to_expire']
+    return var
+
+
+
 def addHosts(host, filename='hosts.json'):
     with open(filename,'r+') as file:
         file_data = json.load(file)

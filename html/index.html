@@ -29,6 +29,11 @@
                             <h6>
                                 {{ host }} <i id="hostcross{{hosts.index(host)}}" style="color:#8f2214" class="bi bi-x-circle"></i>
                             </h6>
+                            <h6>
+                                {% if data[host]['cert'] == True %}
+                                <p class="text-success">Válido</p>{% else %}
+                                <p class="text-danger">Inválido</p>{% endif %} Dias para expirar: {{ data[host]['daystoexpire'] }}
+                            </h6>
                         </div>
                     </li>
 
