@@ -1,5 +1,4 @@
 from re import T
-from sslchecker import SSLChecker
 from flask import Flask, request, render_template, send_from_directory, redirect
 from flask_basicauth import BasicAuth
 from werkzeug.utils import secure_filename
@@ -15,6 +14,7 @@ configapp = yaml['app']
 configzabbix = yaml['zabbix']
 configemail = yaml['email']
 
+zabbixauth = functions.authentication(configzabbix['server'], configzabbix['credentials'])
 if configapp['env'] != 'dev':
     app.config['BASIC_AUTH_USERNAME'] = configapp['credentials']['username']
     app.config['BASIC_AUTH_PASSWORD'] = configapp['credentials']['password']
@@ -38,9 +38,7 @@ def upload():
 
 @app.route("/api/v1/runchecker", methods=['POST'])
 def runchecker():
-    args = functions.getHosts()
-    res = SSLChecker.show_result(SSLChecker.get_args(json_args=args))
-    return json.loads(res)
+    return functions.runchecker()
 
 @app.route('/api/v1/sendemail', methods=['POST'])
 def sendemail():
@@ -50,7 +48,7 @@ def sendemail():
 def addHost():
     host = request.form['host']
     if functions.domainValidation(host):
-        temp = functions.addHosts(host)
+        temp = functions.addHosts(host, zabbixauth)
         if "error" in temp:
             return f"{temp}"
         else:
@@ -87,4 +85,3 @@ def newhost():
 def debugging():
     return render_template("debugging.html")
 
-SSLChecker = SSLChecker()

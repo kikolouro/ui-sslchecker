@@ -232,7 +232,7 @@ class SSLChecker:
 
     def show_result(self, user_args):
         """Get the context."""
-        print(user_args)
+        #print(user_args)
         context = {}
         start_time = datetime.now()
         hosts = user_args.hosts
@@ -434,4 +434,5 @@ class SSLChecker:
 
 if __name__ == '__main__':
     SSLCheckerObject = SSLChecker()
-    SSLCheckerObject.show_result(SSLCheckerObject.get_args(json_args={}))
+    host = "expired.badssl.com"
+    SSLCheckerObject.show_result(SSLCheckerObject.get_args(json_args={"hosts": [host], "verbose": "True"}))

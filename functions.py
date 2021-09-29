@@ -1,16 +1,30 @@
 import json, re, yaml, os, smtplib, ssl
 from yaml.loader import SafeLoader
+from pyzabbix import ZabbixAPI
+from sslchecker import SSLChecker
+
+SSLChecker = SSLChecker()
 
 def readConfig(config_file="config.yaml"):
     with open(config_file) as f:
         data = yaml.load(f, Loader=SafeLoader)
     return data
 
+
 def getHosts(hosts_file="hosts.json"):
     json_file = open(hosts_file)
     var = json.load(json_file)
     json_file.close()
     return var
+
+def runchecker():
+    args = getHosts()
+    res = SSLChecker.show_result(SSLChecker.get_args(json_args=args))
+    return json.loads(res)
+
+def runsinglechecker(host):
+    res = SSLChecker.show_result(SSLChecker.get_args(json_args={"hosts": [host], "verbose":True}))
+    return json.loads(res)
 
 def getData(hosts_file="data.json"):
     json_file = open(hosts_file)
@@ -23,9 +37,8 @@ def getData(hosts_file="data.json"):
         var[host]['daystoexpire'] = hosts[host]['valid_days_to_expire']
     return var
 
-
-
-def addHosts(host, filename='hosts.json'):
+def addHosts(host, auth, filename='hosts.json'):
+    #create_web_scenario(auth, host, f"https://{host}")
     with open(filename,'r+') as file:
         file_data = json.load(file)
         if host in file_data['hosts']:
@@ -33,6 +46,14 @@ def addHosts(host, filename='hosts.json'):
         file_data["hosts"].append(host)
         file.seek(0)
         json.dump(file_data, file, indent = 4)
+        file.seek(0)
+    
+    with open('data.json', 'r+') as File:
+        res = runsinglechecker(host)
+        print(res)
+        file_data = json.load(File)
+        print(file_data)
+        json.dump(file_data, File, indent = 4)
     return "Success" 
 
 def delHost(host, filename='hosts.json'):
@@ -92,3 +113,59 @@ def changeHostFile(obj, filename='hosts.json'):
             os.remove(os.path.join('temp', f))
         return "Success"
 
+def getHostID(auth):
+    f  = {  'host' : 'Zabbix Server'  }
+    hosts = auth.host.get(filter=f, output=['hostids', 'host'] )
+    print(hosts)
+
+def authentication(server_url, credentials):
+
+    user = credentials['username']
+    password = credentials['password']
+    if server_url and user and password:
+        ZABBIX_SERVER = server_url
+        zapi = ZabbixAPI(ZABBIX_SERVER, user=user, password=password)
+        try:
+            # Login to the Zabbix API
+            #zapi.login(user, password)
+            print(zapi.get_id(item_type="host", ))
+            return zapi
+        except Exception as e:
+            print(e)
+    else:
+        return 'Zabbix Server url , user and password are required, try use --help'
+
+
+def create_web_scenario(auth, name, url, hostid=10084, status='200,201,210-299,302'):
+    
+    request = ZabbixAPI.do_request(auth, 'httptest.get', params={ "filter": {"name": name}})
+    if request['result']:
+        return f'Host {name} already registered'
+    else:
+        try:
+            ZabbixAPI.do_request(auth, 'httptest.create',
+            params={"name": f"{name}_cenario",
+            "hostid": hostid,
+             "delay": '60',
+             "retries": '3',
+              "steps": [ { 'name': url,
+               'url': url,
+               'status_codes': status,
+                'no': '1'} ] } )
+            triggers = create_trigger(auth,name)
+        except Exception as e:
+            print(e)
+
+
+def create_trigger(auth,name):
+    
+    triggers = auth.trigger.create(description=f"{name} Falhou: {{ITEM.VALUE}}",
+    comments="",
+    expression=f"{{Zabbix server:web.test.error[{name}_cenario].strlen()}}>0 and {{Zabbix server:web.test.fail[{name}_cenario].last()}}>0",
+    priority=5)
+
+    triggers = auth.trigger.create(description=f"{name} está lento: {{ITEM.VALUE}}",
+    comments="",
+    expression=f"{{Zabbix server:web.test.in[{name}_cenario,,bps].last()}}<500",
+    priority=5)
+    return triggers

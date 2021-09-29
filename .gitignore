@@ -3,4 +3,6 @@ hosts*.*
 config.yaml
 !hosts.html
 data.json
+data1.json
 yoyo.json
+temp*
