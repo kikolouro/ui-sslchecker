@@ -89,7 +89,9 @@ def sendEmail(receiver, sender, host, daysleft, port=465, smtpserver='smtp.gmail
     Subject: Certificado a expirar: {host}
 
     O certificado está a expirar no host: {host}. Expira em {daysleft} dias.""".encode('utf-8')
-   
+    SUBJECT = f"Certificado a expirar: {host}"
+    TEXT = f"O certificado está a expirar no host: {host}. Expira em {daysleft} dias."
+    message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
     context = ssl.create_default_context()
     
     with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
