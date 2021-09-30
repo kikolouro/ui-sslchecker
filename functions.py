@@ -86,7 +86,7 @@ def sendEmail(receiver, sender, host, daysleft, port=465, smtpserver='smtp.gmail
     password = sender['password']
 
     message = f"""\
-    Certificado a expirar: {host}
+    Subject: Certificado a expirar: {host}
 
     O certificado está a expirar no host: {host}. Expira em {daysleft} dias.""".encode('utf-8')
    
