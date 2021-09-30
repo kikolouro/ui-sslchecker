@@ -18,4 +18,4 @@ fi
 
 #docker build -t flouro.azurecr.io/sslchecker:$VERSION
 
-docker-compose up
+docker-compose up -d
