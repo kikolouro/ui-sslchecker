@@ -23,7 +23,7 @@ def runchecker():
     return json.loads(res)
 
 def runsinglechecker(host):
-    res = SSLChecker.show_result(SSLChecker.get_args(json_args={"hosts": [host], "verbose":True}))
+    res = SSLChecker.show_result(SSLChecker.get_args(json_args={"hosts": [host]}))
     return json.loads(res)
 
 def getData(hosts_file="data.json"):
@@ -53,6 +53,9 @@ def addHosts(host, auth, filename='hosts.json'):
         print(res)
         file_data = json.load(File)
         print(file_data)
+        file_data.update(res)
+        
+        File.seek(0)
         json.dump(file_data, File, indent = 4)
     return "Success" 
 

@@ -32,7 +32,17 @@
                             <h6>
                                 {% if data[host]['cert'] == True %}
                                 <p class="text-success">Válido</p>{% else %}
-                                <p class="text-danger">Inválido</p>{% endif %} Dias para expirar: {{ data[host]['daystoexpire'] }}
+                                <p class="text-danger">Inválido</p>{% endif %} 
+                                {% if data[host]['daystoexpire'] > 50 %}
+                                    <p class="text-success">Dias para expirar: {{ data[host]['daystoexpire'] }}</p>
+                                {% endif %}
+                                {% if data[host]['daystoexpire'] < 50 and data[host]['daystoexpire'] > 0 %}
+                                    <p class="text-warning">Dias para expirar: {{ data[host]['daystoexpire'] }}</p>
+                                {% endif %}
+                                {% if data[host]['daystoexpire'] < 0 %}
+                                    <p class="text-danger">Expirou à {{ data[host]['daystoexpire'] }} dias.</p>
+                                {% endif %}
+                                
                             </h6>
                         </div>
                     </li>

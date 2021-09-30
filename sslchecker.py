@@ -15,19 +15,7 @@ except ImportError:
     print('Please install required modules: pip install -r requirements.txt')
     sys.exit(1)
 
-# 2 to worked
-def SendEmail(host, valid_days_to_expire):
-    url = "URL_TO_API"
-    r = requests.post(url, data={
-        "host": host,
-        "valid_days_to_expire": valid_days_to_expire
-    })
-
-    if valid_days_to_expire < 0:
-        text = "O certificado expirou no host: {}. Expirou a {} Dias".format(host, valid_days_to_expire)
-    else:
-        text = "O certificado está a expirar no host: {}. Falta {} Dias.".format(host, valid_days_to_expire)
-        
+       
 class SSLChecker:
 
     total_valid = 0
@@ -136,7 +124,6 @@ class SSLChecker:
         """Get all the information about cert and create a JSON file."""
         notification_days = 30
         context = {}
-
         cert_subject = cert.get_subject()
 
         context['host'] = host
@@ -174,9 +161,11 @@ class SSLChecker:
         # Valid days left
         context['valid_days_to_expire'] = (datetime.strptime(context['valid_till'],
                                                              '%Y-%m-%d') - datetime.now()).days
+        print("banana")
 
         if context['valid_days_to_expire'] < notification_days:
-            SendEmail(context['host'], context['valid_days_to_expire'],)
+            pass
+            #SendEmail(context['host'], context['valid_days_to_expire'],)
 
         if cert.has_expired():
             self.total_expired += 1
@@ -256,9 +245,10 @@ class SSLChecker:
 
             try:
                 cert = self.get_cert(host, port, user_args)
+                print(cert)
                 context[host] = self.get_cert_info(host, cert)
+                print("adadadad")
                 context[host]['tcp_port'] = int(port)
-
                 # Analyze the certificate if enabled
                 if user_args.analyze:
                     context = self.analyze_ssl(host, context, user_args)
@@ -434,5 +424,4 @@ class SSLChecker:
 
 if __name__ == '__main__':
     SSLCheckerObject = SSLChecker()
-    host = "expired.badssl.com"
-    SSLCheckerObject.show_result(SSLCheckerObject.get_args(json_args={"hosts": [host], "verbose": "True"}))
+    SSLCheckerObject.show_result(SSLCheckerObject.get_args(json_args={}))

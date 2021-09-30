@@ -1,0 +1,10 @@
+version: "3.2"
+services: 
+    sslchecker:
+        build: 
+          context: '.'
+        container_name: sslchecker
+        volumes: ['./hosts.json:/hosts.json']
+        restart: always
+        ports: 
+          - "8000:5000"

@@ -34,6 +34,13 @@ def upload():
         with open(f"{app.config['UPLOAD_FOLDER']}/{filename}", "r") as File:
             var = json.load(File)
             functions.changeHostFile(var)
+        with open('data.json', 'r+') as File:
+            res = functions.runchecker()
+            file_data = json.load(File)
+            file_data.update(res)
+            
+            File.seek(0)
+            json.dump(file_data, File, indent = 4)
         return redirect("/")
 
 @app.route("/api/v1/runchecker", methods=['POST'])
