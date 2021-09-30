@@ -4,7 +4,7 @@ services:
         build: 
           context: '.'
         container_name: sslchecker
-        volumes: ['./hosts.json:/hosts.json']
+        volumes: ['./:/app']
         restart: always
         ports: 
           - "8000:5000"
