@@ -38,7 +38,7 @@ def getData(hosts_file="data.json"):
     return var
 
 def addHosts(host, auth, filename='hosts.json'):
-    #create_web_scenario(auth, host, f"https://{host}")
+    create_web_scenario(auth, host, f"https://{host}")
     with open(filename,'r+') as file:
         file_data = json.load(file)
         if host in file_data['hosts']:

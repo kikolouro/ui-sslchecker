@@ -49,7 +49,10 @@ def runchecker():
 
 @app.route('/api/v1/sendemail', methods=['POST'])
 def sendemail():
-    return functions.sendEmail(configemail['receiver'], configemail['sender'], 'example.com', 30)
+    data = request.form
+    host = data['host']
+    daysleft = data['daysleft']
+    return functions.sendEmail(configemail['receiver'], configemail['sender'], host, daysleft)
 
 @app.route("/api/v1/addhost", methods=['POST'])
 def addHost():
