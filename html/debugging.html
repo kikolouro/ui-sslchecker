@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificados SSL</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}">
+</head>
+
+{% include "navbar.html" %}
+
+<body class="content">
+
+
+
+    <div class="container-fluid pt-xl-5" style="width: 80%; height: 80%;">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary" style="display:inline;">Central de Debugging</h6> <button href="?" id="runscriptbutton" class="btn btn-primary btn-sm float-right">Correr Script</button>
+            </div>
+            <div class="p-2">
+                <h1 class="m-0 font-weight-bold" style="text-align: center;">Output</h1><br>
+                <pre id="textarea" readonly></pre>
+            </div>
+
+        </div>
+    </div>
+    <script>
+        function output(inp) {
+            document.getElementById('textarea').innerHTML = inp;
+        }
+
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+                var cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+
+
+
+        $(document).ready(() => {
+            $('#runscriptbutton').click(() => {
+                $.ajax({
+                    url: "/api/v1/runchecker",
+                    type: "post",
+                    success: (results) => {
+                        //document.getElementById("textarea").textContent = results;
+                        v = JSON.stringify(results, undefined, 4)
+                        output(v);
+                        output(syntaxHighlight(v));
+                    }
+                })
+            })
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+
+</html>

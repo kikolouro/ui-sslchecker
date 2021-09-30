@@ -1,0 +1,24 @@
+textarea {
+    resize: none;
+    overflow-y: scroll;
+    background-color: black !important;
+    color: white !important; 
+  }
+  i {
+    margin: 5px;
+  }
+
+  a.deco-none {
+    color:#000000 !important;
+    text-decoration:none;
+
+}
+
+.bg-menu:hover {
+    background-color:#0079C1;
+    color:#FFFFFF;
+}
+
+.clickable {
+    cursor:pointer; 
+}

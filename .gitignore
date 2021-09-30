@@ -1,0 +1,7 @@
+__pycache__
+hosts.*
+config.yaml
+data.json
+data1.json
+yoyo.json
+temp/*

@@ -15,29 +15,7 @@ except ImportError:
     print('Please install required modules: pip install -r requirements.txt')
     sys.exit(1)
 
-
-def SendEmail(host, valid_days_to_expire):
-    url = "URL_TO_API"
-    r = requests.post(url, data={
-        "host": host,
-        "valid_days_to_expire": valid_days_to_expire
-    })
-
-    if valid_days_to_expire < 0:
-        text = "O certificado expirou no host: {}. Expirou a {} Dias".format(host, valid_days_to_expire)
-    else:
-        text = "O certificado está a expirar no host: {}. Falta {} Dias.".format(host, valid_days_to_expire)
-        
-    url = "https://slack.com/api/chat.postMessage"
-    data = {"channel": "CHANNEL_NAME","text": text}
-
-    r = requests.post(url,headers={
-        "Content-type": "application/json",
-        "Authorization": "Bearer TOKEN"},
-         data=json.dumps(data))
-
-
-
+       
 class SSLChecker:
 
     total_valid = 0
@@ -146,7 +124,6 @@ class SSLChecker:
         """Get all the information about cert and create a JSON file."""
         notification_days = 30
         context = {}
-
         cert_subject = cert.get_subject()
 
         context['host'] = host
@@ -184,9 +161,11 @@ class SSLChecker:
         # Valid days left
         context['valid_days_to_expire'] = (datetime.strptime(context['valid_till'],
                                                              '%Y-%m-%d') - datetime.now()).days
+        print("banana")
 
         if context['valid_days_to_expire'] < notification_days:
-            SendEmail(context['host'], context['valid_days_to_expire'],)
+            pass
+            #SendEmail(context['host'], context['valid_days_to_expire'],)
 
         if cert.has_expired():
             self.total_expired += 1
@@ -242,6 +221,7 @@ class SSLChecker:
 
     def show_result(self, user_args):
         """Get the context."""
+        #print(user_args)
         context = {}
         start_time = datetime.now()
         hosts = user_args.hosts
@@ -265,9 +245,10 @@ class SSLChecker:
 
             try:
                 cert = self.get_cert(host, port, user_args)
+                print(cert)
                 context[host] = self.get_cert_info(host, cert)
+                print("adadadad")
                 context[host]['tcp_port'] = int(port)
-
                 # Analyze the certificate if enabled
                 if user_args.analyze:
                     context = self.analyze_ssl(host, context, user_args)
@@ -353,9 +334,8 @@ class SSLChecker:
         """Set argparse options."""
         parser = ArgumentParser(prog='ssl_checker.py', add_help=False,
                                 description="""Collects useful information about given host's SSL certificates.""")
-
         if len(json_args) > 0:
-            args = parser.parse_args()
+            args, unknown = parser.parse_known_args()
             setattr(args, 'json_true', True)
             setattr(args, 'verbose', False)
             setattr(args, 'csv_enabled', False)

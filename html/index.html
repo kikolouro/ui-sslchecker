@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificados SSL</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}">
+</head>
+
+{% include "navbar.html" %}
+
+<body>
+    <div class="container-fluid pt-xl-5" style="width: 80%; height: 80%;">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Host</h6>
+            </div>
+
+            <div class="col-6 mx-auto p-4" align="center">
+                <ul class="list-group" id="hosts">
+                    {% for host in hosts %}
+                    <li class="list-group-item">
+                        <div class="container">
+                            <h6>
+                                {{ host }} <i id="hostcross{{hosts.index(host)}}" style="color:#8f2214" class="bi bi-x-circle"></i>
+                            </h6>
+                            <h6>
+                                {% if data[host]['cert'] == True %}
+                                <p class="text-success">Válido</p>{% else %}
+                                <p class="text-danger">Inválido</p>{% endif %} 
+                                {% if data[host]['daystoexpire'] > 50 %}
+                                    <p class="text-success">Dias para expirar: {{ data[host]['daystoexpire'] }}</p>
+                                {% endif %}
+                                {% if data[host]['daystoexpire'] < 50 and data[host]['daystoexpire'] > 0 %}
+                                    <p class="text-warning">Dias para expirar: {{ data[host]['daystoexpire'] }}</p>
+                                {% endif %}
+                                {% if data[host]['daystoexpire'] < 0 %}
+                                    <p class="text-danger">Expirou à {{ data[host]['daystoexpire'] }} dias.</p>
+                                {% endif %}
+                                
+                            </h6>
+                        </div>
+                    </li>
+
+                    <div class="modal fade" id="delete{{hosts.index(host)}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel">Apagar {{ host }}
+                                    </h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <!-- Alterar -->
+                                <form id="formdelete{{host.index(host)}}" action="?">
+                                    <div class="modal-body">
+                                        <input type="text" id="deleteinput{{hosts.index(host)}}" class="form-control" placeholder="Nome do host a apagar" />
+                                        <input type="hidden" name="id" value="{{hosts.index(host)}}" />
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary active" data-dismiss="modal">Voltar atrás</button>
+                                        <button type="button" id="deletebutton{{hosts.index(host)}}" class="btn btn-danger" disabled>Apagar {{ host }}</button>
+
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        $('#host{{hosts.index(host)}}').hover(() => {
+                            $('#hostpencil{{hosts.index(host)}}').removeClass('bi-pencil')
+                            $('#hostpencil{{hosts.index(host)}}').addClass('bi-pencil-fill')
+                            $('#hostcross{{hosts.index(host)}}').removeClass('bi-x-circle')
+                            $('#hostcross{{hosts.index(host)}}').addClass('bi-x-circle-fill')
+                        }, () => {
+                            $('#hostpencil{{hosts.index(host)}}').removeClass('bi-pencil-fill')
+                            $('#hostpencil{{hosts.index(host)}}').addClass('bi-pencil')
+                            $('#hostcross{{hosts.index(host)}}').removeClass('bi-x-circle-fill')
+                            $('#hostcross{{hosts.index(host)}}').addClass('bi-x-circle')
+                        })
+
+                        $('#hostpencil{{hosts.index(host)}}').click(() => {
+                            $('#input{{hosts.index(host)}}').attr('type', 'text')
+                            $('#dns{{hosts.index(host)}}').hide()
+                            $('#button{{hosts.index(host)}}').show()
+                        })
+                        $('#Sair{{hosts.index(host)}}').click(() => {
+                            $('#input{{hosts.index(host)}}').attr('type', 'hidden')
+                            $('#dns{{hosts.index(host)}}').show()
+                            $('#button{{hosts.index(host)}}').hide()
+                        })
+                        $('#hostcross{{hosts.index(host)}}').click(() => {
+                            $('#delete{{hosts.index(host)}}').modal()
+                        })
+                        $('#deleteinput{{hosts.index(host)}}').keyup(() => {
+                            if ($('#deleteinput{{hosts.index(host)}}').val() == '{{ host }}')
+                                document.getElementById('deletebutton{{hosts.index(host)}}').disabled = false
+                            else
+                                document.getElementById('deletebutton{{hosts.index(host)}}').disabled = true
+                        })
+                    </script>
+                    <script>
+                        $(document).ready(function() {
+                            $('#deletebutton{{hosts.index(host)}}').click(() => {
+                                data = document.getElementById('deleteinput{{hosts.index(host)}}').value
+                                $.ajax({
+                                    url: "/api/v1/delhost",
+                                    type: "post",
+                                    data: {
+                                        "host": data
+                                    },
+                                    success: (results) => {
+                                        window.location.replace("/");
+                                    }
+                                })
+                            })
+                        });
+                    </script>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script src="{{url_for('static', filename='index.js')}}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+
+</html>
