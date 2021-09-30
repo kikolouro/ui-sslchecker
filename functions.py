@@ -96,7 +96,7 @@ def sendEmail(receiver, sender, host, daysleft, port=465, smtpserver='smtp.gmail
     
     with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
         server.login(sender_email, password)
-        server.sendmail(sender_email, receiver, message)
+        server.sendmail(sender_email, receiver, message.encode('utf-8'))
         return "Success"
 
 def allowed_file(filename, ALLOWED_EXTENSIONS):
