@@ -161,7 +161,7 @@ class SSLChecker:
         # Valid days left
         context['valid_days_to_expire'] = (datetime.strptime(context['valid_till'],
                                                              '%Y-%m-%d') - datetime.now()).days
-        print("banana")
+        #print("banana")
 
         if context['valid_days_to_expire'] < notification_days:
             pass
@@ -245,9 +245,9 @@ class SSLChecker:
 
             try:
                 cert = self.get_cert(host, port, user_args)
-                print(cert)
+                #print(cert)
                 context[host] = self.get_cert_info(host, cert)
-                print("adadadad")
+                #print("adadadad")
                 context[host]['tcp_port'] = int(port)
                 # Analyze the certificate if enabled
                 if user_args.analyze:

@@ -1,7 +1,6 @@
 pyopenssl
 json2html
 requests
-mysql-connector-python
 Flask
 gunicorn
 pyyaml

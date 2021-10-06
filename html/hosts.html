@@ -1,0 +1,118 @@
+
+<div id="addhosts" class="container">
+<div id="showhosts" class="row">
+
+{% for host in data %}
+<div class="col-3 mx-auto p-1" align="center">
+<ul class="list-group">
+        {% if host['cert'] == False %}
+            {% set aux = 'danger' %}
+        {% elif host['cert'] == True and host['daystoexpire'] > 50 %}
+            {% set aux = 'success' %}
+        {% elif host['cert'] == True and host['daystoexpire'] < 50 %}
+            {% set aux = 'warning' %}
+        {% endif %}
+
+    <li class="list-group-item list-group-item-{{ aux }} kselector" style="clear:both">
+       <div class="container">
+            <h6 style="font-size: 0.9rem;">
+               {{ host["host"] }} <i id="hostcross{{ host["host"] }}" style="color:#8f2214" class="bi bi-x-circle"></i><br>
+
+                <span class="badge badge-{{ aux }} badge-pill">
+                    {% if host['pinged'] == True %}
+                        {% if host['daystoexpire'] < 0 %}
+                            Expirou à {{ host['daystoexpire'] | abs }} dias
+                        {% else %}
+                            Expira em {{ host['daystoexpire'] }} dias
+                        {% endif %}
+                    {% else %}
+                        Não é possível pingar o webserver
+                    {% endif %}
+
+                </span>
+            </h6>
+        </div>
+    </li>
+
+    <div class="modal fade" id="delete{{ host["host"] }}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Apagar {{ host["host"] }}
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <!-- Alterar -->
+                <form id="formdelete{{data.index(host)}}" action="?">
+                    <div class="modal-body">
+                        <input type="text" id="deleteinput{{ host["host"] }}" class="form-control" placeholder="Nome do host a apagar" />
+                        <input type="hidden" name="id" value="{{ host["host"] }}" />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary active" data-dismiss="modal">Voltar atrás</button>
+                        <button type="button" id="deletebutton{{ host["host"] }}" class="btn btn-danger" disabled>Apagar {{ host["host"] }}</button>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        $('#host{{ host["host"] }}').hover(() => {
+            $('#hostpencil{{ host["host"] }}').removeClass('bi-pencil')
+            $('#hostpencil{{ host["host"] }}').addClass('bi-pencil-fill')
+            $('#hostcross{{ host["host"] }}').removeClass('bi-x-circle')
+            $('#hostcross{{ host["host"] }}').addClass('bi-x-circle-fill')
+        }, () => {
+            $('#hostpencil{{ host["host"] }}').removeClass('bi-pencil-fill')
+            $('#hostpencil{{ host["host"] }}').addClass('bi-pencil')
+            $('#hostcross{{ host["host"] }}').removeClass('bi-x-circle-fill')
+            $('#hostcross{{ host["host"] }}').addClass('bi-x-circle')
+        })
+
+        $('#hostpencil{{ host["host"] }}').click(() => {
+            $('#input{{ host["host"] }}').attr('type', 'text')
+            $('#dns{{ host["host"] }}').hide()
+            $('#button{{ host["host"] }}').show()
+        })
+        $('#Sair{{ host["host"] }}').click(() => {
+            $('#input{{ host["host"] }}').attr('type', 'hidden')
+            $('#dns{{ host["host"] }}').show()
+            $('#button{{ host["host"] }}').hide()
+        })
+        $('#hostcross{{ host["host"] }}').click(() => {
+            $('#delete{{ host["host"] }}').modal()
+        })
+        $('#deleteinput{{ host["host"] }}').keyup(() => {
+            if ($('#deleteinput{{ host["host"] }}').val() == '{{ host["host"] }}')
+                document.getElementById('deletebutton{{ host["host"] }}').disabled = false
+            else
+                document.getElementById('deletebutton{{ host["host"] }}').disabled = true
+        })
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('#deletebutton{{ host["host"] }}').click(() => {
+                data = document.getElementById('deleteinput{{ host["host"] }}').value
+                $.ajax({
+                    url: "/api/v1/delhost",
+                    type: "post",
+                    data: {
+                        "host": data
+                    },
+                    success: (results) => {
+                        window.location.replace("/");
+                    }
+                })
+            })
+        });
+
+        
+    </script>
+</ul>
+</div>
+{% endfor %}
+</div>
+</div>

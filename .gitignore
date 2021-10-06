@@ -1,7 +1,8 @@
 __pycache__
-hosts.*
+hosts.json
 config.yaml
 data.json
 data1.json
 yoyo.json
 temp/*
+temp.py

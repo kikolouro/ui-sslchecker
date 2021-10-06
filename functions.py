@@ -2,7 +2,7 @@ import json, re, yaml, os, smtplib, ssl
 from yaml.loader import SafeLoader
 from pyzabbix import ZabbixAPI
 from sslchecker import SSLChecker
-
+import fnmatch
 SSLChecker = SSLChecker()
 
 def readConfig(config_file="config.yaml"):
@@ -10,62 +10,119 @@ def readConfig(config_file="config.yaml"):
         data = yaml.load(f, Loader=SafeLoader)
     return data
 
-
-def getHosts(hosts_file="hosts.json"):
+def getHosts(host="", hosts_file="data.json"):
     json_file = open(hosts_file)
     var = json.load(json_file)
     json_file.close()
-    return var
+    if host != "":
+        reg = f"*{host}*"
+    else:
+        reg = "*"
+    temp = {}
+    #print(type(var))
+    for obj in var:
+        #print(obj)
+        match = fnmatch.fnmatch(obj, reg)
+        if match:
+            temp[obj] = var[obj]
+    return temp
 
 def runchecker():
     args = getHosts()
+
+    var = {}
+    var['hosts'] = []
+    for host in args:
+        var['hosts'].append(host)
+    #print(var)
+    res = SSLChecker.show_result(SSLChecker.get_args(json_args=var))
+    jres = json.loads(res)
+    temp = jres
+    for host in list(jres):
+        temp[host]['pinged'] = True
+        for arg in var['hosts']:
+            if arg not in jres:
+                temp[arg] = {}
+                temp[arg]['cert_valid'] = False
+                temp[arg]['pinged'] = False
+    with open('data.json', 'w') as file:
+        file.seek(0)
+        json.dump(temp, file, indent = 4)
+    
+    return temp
+
+def runcheckerupload(args):
     res = SSLChecker.show_result(SSLChecker.get_args(json_args=args))
-    return json.loads(res)
+    jres = json.loads(res)
+    temp = jres
+    for host in list(jres):
+        temp[host]['pinged'] = True
+        for arg in args['hosts']:
+            if arg not in jres:
+                temp[arg] = {}
+                temp[arg]['cert_valid'] = False
+                temp[arg]['pinged'] = False
+    with open('data.json', 'w') as file:
+        file.seek(0)
+        json.dump(temp, file, indent = 4)
+    return temp
 
 def runsinglechecker(host):
     res = SSLChecker.show_result(SSLChecker.get_args(json_args={"hosts": [host]}))
     return json.loads(res)
 
-def getData(hosts_file="data.json"):
+def getData(hostarg="", hosts_file="data.json"):
     json_file = open(hosts_file)
     hosts = json.load(json_file)
     json_file.close()
-    var = {}
+    if hostarg != "":
+        reg = f"*{hostarg}*"
+    else:
+        reg = "*"
+    
+    var = []
     for host in hosts:
-        var[host] = {}
-        var[f'{host}']['cert'] = hosts[host]['cert_valid']
-        var[host]['daystoexpire'] = hosts[host]['valid_days_to_expire']
+        match = fnmatch.fnmatch(host, reg)
+        if match:
+            aux = {}
+            aux['host'] = host
+            aux['cert'] = hosts[host]['cert_valid']
+            if hosts[host]['pinged'] == True:
+                aux['daystoexpire'] = hosts[host]['valid_days_to_expire']
+            else:
+                aux['daystoexpire'] = -10000
+            aux['pinged'] = hosts[host]['pinged']
+            var.append(aux)
     return var
 
-def addHosts(host, auth, filename='hosts.json'):
+def addHosts(host, auth, filename='data.json'):
     create_web_scenario(auth, host, f"https://{host}")
     with open(filename,'r+') as file:
         file_data = json.load(file)
-        if host in file_data['hosts']:
+        if host in file_data:
             return '{"error": "Host already exists."}'
-        file_data["hosts"].append(host)
+        res = runsinglechecker(host)
+
+        if not bool(res):
+            res[host] = {}
+            res[host]['host'] = host
+            res[host]['cert_valid'] = False
+            res[host]['pinged'] = False
+        else:
+            res[host]['pinged'] = True
+        file_data.update(res)
         file.seek(0)
         json.dump(file_data, file, indent = 4)
         file.seek(0)
-    
-    with open('data.json', 'r+') as File:
-        res = runsinglechecker(host)
-        print(res)
-        file_data = json.load(File)
-        print(file_data)
-        file_data.update(res)
-        
-        File.seek(0)
-        json.dump(file_data, File, indent = 4)
     return "Success" 
 
-def delHost(host, filename='hosts.json'):
+def delHost(host, filename='data.json'):
     with open(filename,'r') as file:
         file_data = json.load(file)
-    if host in file_data['hosts']:
+    
+    if host in file_data:
         with open(filename, 'w') as file:
-            i = file_data['hosts'].index(host)
-            file_data['hosts'].pop(i)
+            file_data.pop(host, None)
             file.seek(0)
             json.dump(file_data, file, indent = 4)
     else:
@@ -81,23 +138,28 @@ def domainValidation(domain):
         else:
             return False
 
-def sendEmail(receiver, sender, host, daysleft, port=465, smtpserver='smtp.gmail.com'):
+def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
     sender_email = sender['email']
     password = sender['password']
 
-    message = f"""\
-    Subject: Certificado a expirar: {host}
+    for host in data:
+        if data[host]['pinged']:
+            if data[host]['valid_days_to_expire'] < 15:
 
-    O certificado está a expirar no host: {host}. Expira em {daysleft} dias.""".encode('utf-8')
-    SUBJECT = f"Certificado a expirar: {host}"
-    TEXT = f"O certificado está a expirar no host: {host}. Expira em {daysleft} dias."
-    message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
-    context = ssl.create_default_context()
     
-    with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
-        server.login(sender_email, password)
-        server.sendmail(sender_email, receiver, message.encode('utf-8'))
-        return "Success"
+                message = f"""\
+                Subject: Certificado a expirar: {host}
+
+                O certificado está a expirar no host: {host}. Expira em {data[host]['valid_days_to_expire']} dias.""".encode('utf-8')
+                SUBJECT = f"Certificado a expirar: {host}"
+                TEXT = f"O certificado está a expirar no host: {host}. Expira em {data[host]['valid_days_to_expire']} dias."
+                message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
+                context = ssl.create_default_context()
+                
+                with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
+                    server.login(sender_email, password)
+                    server.sendmail(sender_email, receiver, message.encode('utf-8'))
+    return "Success"
 
 def allowed_file(filename, ALLOWED_EXTENSIONS):
     return '.' in filename and \
@@ -108,11 +170,11 @@ def jsonfileValidation(obj):
         return False
     return True
 
-def changeHostFile(obj, filename='hosts.json'):
+def changeHostFile(obj, filename='data.json'):
     if jsonfileValidation(obj):
         open(filename, 'w').close()
         with open(filename, 'w') as File:
-            json.dump(obj, File, indent = 4)
+            json.dump(runcheckerupload(obj), File, indent = 4)
         filelist = [ f for f in os.listdir('temp')]
         for f in filelist:
             os.remove(os.path.join('temp', f))
@@ -121,7 +183,7 @@ def changeHostFile(obj, filename='hosts.json'):
 def getHostID(auth):
     f  = {  'host' : 'Zabbix Server'  }
     hosts = auth.host.get(filter=f, output=['hostids', 'host'] )
-    print(hosts)
+    #print(hosts)
 
 def authentication(server_url, credentials):
 
@@ -133,7 +195,7 @@ def authentication(server_url, credentials):
         try:
             # Login to the Zabbix API
             #zapi.login(user, password)
-            print(zapi.get_id(item_type="host", ))
+            #print(zapi.get_id(item_type="host", ))
             return zapi
         except Exception as e:
             print(e)

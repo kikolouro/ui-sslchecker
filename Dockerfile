@@ -5,4 +5,4 @@ COPY . /app
 WORKDIR /app
 EXPOSE 5000
 
-ENTRYPOINT gunicorn main:app --reload --bind 0.0.0.0:5000 --workers 1 --threads 2 --timeout 0 
+ENTRYPOINT gunicorn main:app --reload --bind 0.0.0.0:5000 --workers 1 --threads 2 --timeout 0 --capture-output --enable-stdio-inheritance
