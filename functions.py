@@ -236,3 +236,19 @@ def create_trigger(auth,name):
     expression=f"{{Zabbix server:web.test.in[{name}_cenario,,bps].last()}}<500",
     priority=5)
     return triggers
+
+def getScenarioID(auth, host):
+    temp = ZabbixAPI.do_request(auth, 'httptest.get', params={ "filter": {"name": f"{host}_cenario"}})['result']
+    request = []  
+    for req in temp:
+        request.append(req['httptestid'])
+    return request
+
+
+def delete_web_scenario(auth, host):
+    
+    #request = ZabbixAPI.do_request(auth, 'httptest.delete')
+    request = getScenarioID(auth, host)
+    ZabbixAPI.do_request(auth, 'httptest.delete', params=request)
+    return request
+

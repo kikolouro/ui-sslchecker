@@ -3,7 +3,7 @@
 <div id="showhosts" class="row">
 
 {% for host in data %}
-<div class="col-3 mx-auto p-1" align="center">
+<div class="col-3 mx-auto p-1 kselector" align="center">
 <ul class="list-group">
         {% if host['cert'] == False %}
             {% set aux = 'danger' %}
@@ -13,7 +13,7 @@
             {% set aux = 'warning' %}
         {% endif %}
 
-    <li class="list-group-item list-group-item-{{ aux }} kselector" style="clear:both">
+    <li class="list-group-item list-group-item-{{ aux }} " style="clear:both">
        <div class="container">
             <h6 style="font-size: 0.9rem;">
                {{ host["host"] }} <i id="hostcross{{data.index(host)}}" style="color:#8f2214" class="bi bi-x-circle"></i><br>

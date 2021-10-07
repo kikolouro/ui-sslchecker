@@ -24,12 +24,10 @@
                 <h6 class="m-0 font-weight-bold text-primary">Novo Host</h6>
             </div>
             <div class="col-6 mx-auto p-3" align="left">
-                <form action="?" method="POST">
                     <label for="peso">Host:</label> &nbsp
                     <input class="form-control" type="text" id="newhost" placeholder="Novo Host" /><br>
                     <span class="text-danger" id="errormsg"></span> <br>
                     <button id="addHostButton" class="form-control btn btn-sm btn-primary" type="button" style="width:100px">Adicionar</button>
-                </form>
             </div>
         </div>
     </div>
@@ -37,6 +35,10 @@
 
     <script>
         $(document).ready(() => {
+            $('#newhost').keyup( (event) => {
+                if (event.keyCode === 13)
+                    $('#addHostButton').click()
+            })
             $('#addHostButton').click(() => {
                 data = document.getElementById('newhost').value
                 $.ajax({
@@ -53,6 +55,7 @@
                 })
             })
         })
+        
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
