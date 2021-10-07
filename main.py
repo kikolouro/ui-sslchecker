@@ -98,6 +98,7 @@ def delHost():
     host = request.form['host']
     if functions.domainValidation(host):
         temp = functions.delHost(host)
+        functions.delete_web_scenario(zabbixauth, host)
         if "error" in temp:
             return f"{temp}"
         else:
