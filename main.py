@@ -55,8 +55,9 @@ def sendemail():
 @app.route("/api/v1/addhost", methods=['POST'])
 def addHost():
     host = request.form['host']
+    hostid = request.form['hostid']
     if functions.domainValidation(host):
-        temp = functions.addHosts(host, zabbixauth)
+        temp = functions.addHosts(host, zabbixauth, hostid)
         if "error" in temp:
             return f"{temp}"
         else:
@@ -118,7 +119,8 @@ def root():
 
 @app.route("/newhosts")
 def newhost():
-    return render_template('newhosts.html')
+    data = functions.getZabbixHosts(zabbixauth)
+    return render_template('newhosts.html', data = data)
 
 @app.route("/debugging")
 def debugging():

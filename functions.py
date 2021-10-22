@@ -48,7 +48,7 @@ def runchecker():
     with open('data.json', 'w') as file:
         file.seek(0)
         json.dump(temp, file, indent = 4)
-    
+
     return temp
 
 def runcheckerupload(args):
@@ -79,7 +79,7 @@ def getData(hostarg="", hosts_file="data.json"):
         reg = f"*{hostarg}*"
     else:
         reg = "*"
-    
+
     var = []
     for host in hosts:
         match = fnmatch.fnmatch(host, reg)
@@ -95,8 +95,8 @@ def getData(hostarg="", hosts_file="data.json"):
             var.append(aux)
     return var
 
-def addHosts(host, auth, filename='data.json'):
-    create_web_scenario(auth, host, f"https://{host}")
+def addHosts(host, auth, hostid, filename='data.json'):
+    create_web_scenario(auth, host, f"https://{host}", hostid)
     with open(filename,'r+') as file:
         file_data = json.load(file)
         if host in file_data:
@@ -114,12 +114,12 @@ def addHosts(host, auth, filename='data.json'):
         file.seek(0)
         json.dump(file_data, file, indent = 4)
         file.seek(0)
-    return "Success" 
+    return "Success"
 
 def delHost(host, filename='data.json'):
     with open(filename,'r') as file:
         file_data = json.load(file)
-    
+
     if host in file_data:
         with open(filename, 'w') as file:
             file_data.pop(host, None)
@@ -128,7 +128,7 @@ def delHost(host, filename='data.json'):
     else:
         return '{"error": "Host doesn\'t exists."}'
     return "Success"
-        
+
 
 def domainValidation(domain):
     regex = '^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$'
@@ -146,7 +146,7 @@ def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
         if data[host]['pinged']:
             if data[host]['valid_days_to_expire'] < 15:
 
-    
+
                 message = f"""\
                 Subject: Certificado a expirar: {host}
 
@@ -155,7 +155,7 @@ def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
                 TEXT = f"O certificado está a expirar no host: {host}. Expira em {data[host]['valid_days_to_expire']} dias."
                 message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
                 context = ssl.create_default_context()
-                
+
                 with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
                     server.login(sender_email, password)
                     server.sendmail(sender_email, receiver, message.encode('utf-8'))
@@ -204,7 +204,7 @@ def authentication(server_url, credentials):
 
 
 def create_web_scenario(auth, name, url, hostid=10084, status='200,201,210-299,302'):
-    
+    hostname = ZabbixAPI.do_request(auth, 'host.get', params={"filter": {"hostid":hostid}, "output":["host"]})['result'][0]['host']
     request = ZabbixAPI.do_request(auth, 'httptest.get', params={ "filter": {"name": name}})
     if request['result']:
         return f'Host {name} already registered'
@@ -219,36 +219,39 @@ def create_web_scenario(auth, name, url, hostid=10084, status='200,201,210-299,3
                'url': url,
                'status_codes': status,
                 'no': '1'} ] } )
-            triggers = create_trigger(auth,name)
+            triggers = create_trigger(auth,name, hostname)
         except Exception as e:
             print(e)
 
 
-def create_trigger(auth,name):
-    
+def create_trigger(auth,name, host):
+
     triggers = auth.trigger.create(description=f"{name} Falhou: {{ITEM.VALUE}}",
     comments="",
-    expression=f"{{Zabbix server:web.test.error[{name}_cenario].strlen()}}>0 and {{Zabbix server:web.test.fail[{name}_cenario].last()}}>0",
+    expression=f"{{{host}:web.test.error[{name}_cenario].strlen()}}>0 and {{{host}:web.test.fail[{name}_cenario].last()}}>0",
     priority=5)
 
     triggers = auth.trigger.create(description=f"{name} está lento: {{ITEM.VALUE}}",
     comments="",
-    expression=f"{{Zabbix server:web.test.in[{name}_cenario,,bps].last()}}<500",
+    expression=f"{{{host}:web.test.in[{name}_cenario,,bps].last()}}<500",
     priority=5)
     return triggers
 
 def getScenarioID(auth, host):
     temp = ZabbixAPI.do_request(auth, 'httptest.get', params={ "filter": {"name": f"{host}_cenario"}})['result']
-    request = []  
+    request = []
     for req in temp:
         request.append(req['httptestid'])
     return request
 
 
 def delete_web_scenario(auth, host):
-    
-    #request = ZabbixAPI.do_request(auth, 'httptest.delete')
     request = getScenarioID(auth, host)
     ZabbixAPI.do_request(auth, 'httptest.delete', params=request)
     return request
+
+def getZabbixHosts(auth):
+    temp = ZabbixAPI.do_request(auth, 'host.get', params={ "output": ["hostid", "host"]})['result']
+    print(temp)
+    return temp
 
