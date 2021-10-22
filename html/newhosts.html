@@ -24,8 +24,15 @@
                 <h6 class="m-0 font-weight-bold text-primary">Novo Host</h6>
             </div>
             <div class="col-6 mx-auto p-3" align="left">
-                    <label for="peso">Host:</label> &nbsp
+                    <label for="newhost">Host:</label> &nbsp
                     <input class="form-control" type="text" id="newhost" placeholder="Novo Host" /><br>
+                    <label for="httpreq">Host que faz o HTTP Request:</label> &nbsp
+                    <select id="httpreq" class="form-control">
+                        {% for host in data %}
+                            <option id="{{ host['hostid'] }}">{{ host['host'] }}</option>
+                        {% endfor %}
+                        
+                    </select><br>
                     <span class="text-danger" id="errormsg"></span> <br>
                     <button id="addHostButton" class="form-control btn btn-sm btn-primary" type="button" style="width:100px">Adicionar</button>
             </div>
@@ -41,11 +48,14 @@
             })
             $('#addHostButton').click(() => {
                 data = document.getElementById('newhost').value
+                httpreq = $('#httpreq').find(":selected").attr('id')
+                
                 $.ajax({
                     url: "/api/v1/addhost",
                     type: "post",
                     data: {
-                        "host": data
+                        "host": data,
+                        "hostid": httpreq
                     },
                     success: (results) => {
                         if ("Wrong domain format" != results) {
@@ -53,6 +63,7 @@
                         } else document.getElementById("errormsg").innerHTML = results
                     }
                 })
+
             })
         })
         
