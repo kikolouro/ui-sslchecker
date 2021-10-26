@@ -17,7 +17,7 @@
         <ul style: class="nav mx-auto">
             <li class="nav-item">
                 <a class="nav-link" data-toggle="modal" data-target="#import" id="importbutton" href="#">Importar
-                    ficheiro de hosts</a>
+                    em bulko</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/v1/api/gethostfile">Exportar ficheiro de hosts</a>
@@ -35,10 +35,16 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form action="/api/v1/uploadhosts" method="POST" enctype="multipart/form-data">
+            <form action="/api/v1/uploadhosts" id="formnavbar" method="POST" enctype="multipart/form-data">
                 <div class="modal-body">
-                    <input type="file" name="file" class="form-control" />
-                </div>
+                    <textarea class="form-control" name="data" style="min-width: 100%" form="formnavbar" rows="25"></textarea> <br>
+                <h6>Host que vai fazer o HTTP Request</h6>
+                <select id="httpreq" name="hostid" class="form-control">
+                    {% for host in zabbixdata %}
+                        <option id="{{ host['hostid'] }}">{{ host['host'] }}</option>
+                    {% endfor %}
+                </select><br>
+            </div>
                 <div class=" modal-footer">
                     <button type="button" class="btn btn-secondary active" data-dismiss="modal">Voltar
                         atrás</button>
