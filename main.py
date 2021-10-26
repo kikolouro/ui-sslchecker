@@ -3,7 +3,8 @@ from flask import Flask, request, render_template, send_from_directory, redirect
 from flask_basicauth import BasicAuth
 from werkzeug.utils import secure_filename
 import functions
-import os, json
+import os, json, urllib
+import ast
 app = Flask(__name__, template_folder='html')
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, './temp')
 ALLOWED_EXTENSIONS = {'json'}
@@ -12,7 +13,7 @@ yaml = functions.readConfig()
 configapp = yaml['app']
 configzabbix = yaml['zabbix']
 configemail = yaml['email']
-
+app.config['DEBUG'] = True
 zabbixauth = functions.authentication(configzabbix['server'], configzabbix['credentials'])
 if configapp['env'] != 'dev':
     app.config['DEBUG'] = True
@@ -23,25 +24,15 @@ if configapp['env'] != 'dev':
 
 @app.route("/api/v1/uploadhosts", methods=['POST'])
 def upload():
-    if 'file' not in request.files:
-        return '{"error":"Nenhum ficheiro enviado."}'
-    file = request.files['file']
-    if file.filename == '':
-        return '{"error":"Nenhum ficheiro enviado."}'
-    if file and functions.allowed_file(file.filename, ALLOWED_EXTENSIONS):
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        with open(f"{app.config['UPLOAD_FOLDER']}/{filename}", "r") as File:
-            var = json.load(File)
-            functions.changeHostFile(var)
-        """with open('data.json', 'r+') as File:
-            res = functions.runchecker()
-            file_data = json.load(File)
-            file_data.update(res)
-            
-            File.seek(0)
-            json.dump(file_data, File, indent = 4)"""
-    return redirect("/")
+    data = request.form['data']
+    hostid = request.form['hostid']
+    if len(data) == 0:
+        return "Erro: Não pode ficar vazio" 
+    message = functions.bulkImport(zabbixauth, data, hostid)
+    print(json.dumps(message))
+    #request.form.add('message', message)
+    
+    return redirect(f'/?message={urllib.parse.quote(str(message))}', code=307)
 
 @app.route("/api/v1/runchecker", methods=['POST'])
 def runchecker():
@@ -52,7 +43,7 @@ def sendemail():
     data = request.json
     return functions.sendEmail(configemail['receiver'], configemail['sender'], data)
 
-@app.route("/api/v1/addhost", methods=['POST'])
+@app.route("/api/v1/addhost", methods=['GET', 'POST'])
 def addHost():
     host = request.form['host']
     hostid = request.form['hostid']
@@ -108,14 +99,21 @@ def delHost():
         return "Wrong domain format"
 
 
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def root():
     data = functions.getData()
-
+    zabbixdata = functions.getZabbixHosts(zabbixauth)
     data.sort(key = lambda x:x["daystoexpire"])
     
-
-    return render_template('index.html', data = data)
+    if request.args.get('message') != None:
+        message = request.args.get('message')
+        #message = urllib.parse.unquote(request.args.get('message'))
+        e = ast.literal_eval(message)
+        print(e[0])
+        return render_template('index.html', data = data, zabbixdata=zabbixdata, message=e)
+    else:
+        return render_template('index.html', data = data, zabbixdata=zabbixdata)
+    
 
 @app.route("/newhosts")
 def newhost():

@@ -100,7 +100,7 @@ def addHosts(host, auth, hostid, filename='data.json'):
     with open(filename,'r+') as file:
         file_data = json.load(file)
         if host in file_data:
-            return '{"error": "Host already exists."}'
+            return f'{{"error": "{host} already exists."}}'
         res = runsinglechecker(host)
 
         if not bool(res):
@@ -251,7 +251,36 @@ def delete_web_scenario(auth, host):
     return request
 
 def getZabbixHosts(auth):
-    temp = ZabbixAPI.do_request(auth, 'host.get', params={ "output": ["hostid", "host"]})['result']
-    print(temp)
+    temp = ZabbixAPI.do_request(auth, 'host.get', params={ "output": ["hostid", "host"], "filter":{"status": "Enabled"}})['result']
+    #print(temp)
     return temp
 
+def getZabbixHostidFromName(auth, host):
+    #print(host)
+    temp = ZabbixAPI.do_request(auth, 'host.get', params={ "output": ["hostid"], "filter":{"name": f"{host}"}})['result']
+    #print(temp)
+    return temp
+
+def bulkImport(auth, data, zabbixhost):
+    hosts = data.replace('\r', '').split('\n')
+    #print(hosts)
+    hostid = getZabbixHostidFromName(auth, zabbixhost)[0]['hostid']
+    output = []
+    for host in hosts:
+        aux = {}
+        aux['host'] = host
+        if domainValidation(host):
+            temp = addHosts(host, auth, hostid)
+            if "error" in temp:
+                aux['message'] = temp
+                aux['status'] = "danger"
+            else:
+                aux['message'] = f"{host} Adicionado com sucesso"
+                aux['status'] = "success"
+        else:
+            aux['message'] = f"Host: {host} inválido"
+            aux['status'] = "danger"
+        output.append(aux)
+    return output
+    #print(type(data))
+    
