@@ -47,8 +47,10 @@ def sendemail():
 def addHost():
     host = request.form['host']
     hostid = request.form['hostid']
+    value = request.form['bps']
+    print(value)
     if functions.domainValidation(host):
-        temp = functions.addHosts(host, zabbixauth, hostid)
+        temp = functions.addHosts(host, zabbixauth, hostid, value)
         if "error" in temp:
             return f"{temp}"
         else:

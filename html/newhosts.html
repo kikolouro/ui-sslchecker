@@ -24,17 +24,22 @@
                 <h6 class="m-0 font-weight-bold text-primary">Novo Host</h6>
             </div>
             <div class="col-6 mx-auto p-3" align="left">
-                    <label for="newhost">Host:</label> &nbsp
-                    <input class="form-control" type="text" id="newhost" placeholder="Novo Host" /><br>
-                    <label for="httpreq">Host que faz o HTTP Request:</label> &nbsp
-                    <select id="httpreq" class="form-control">
-                        {% for host in data %}
-                            <option id="{{ host['hostid'] }}">{{ host['host'] }}</option>
-                        {% endfor %}
-                        
-                    </select><br>
-                    <span class="text-danger" id="errormsg"></span> <br>
-                    <button id="addHostButton" class="form-control btn btn-sm btn-primary" type="button" style="width:100px">Adicionar</button>
+                <label for="newhost">Host:</label> &nbsp
+                <input class="form-control" type="text" id="newhost" placeholder="Novo Host" /><br>
+                <label for="hostid">Host que faz o HTTP Request:</label> &nbsp
+                <select id="hostid" class="form-control">
+                    {% for host in data %}
+                    <option id="{{ host['hostid'] }}">{{ host['host'] }}</option>
+                    {% endfor %}
+
+                </select><br>
+                <label for="customRange1" class="form-label">BPS:</label>
+                <input type="range" min="500" max="15000" class="form-control" step="500" id="customRange1" oninput="this.nextElementSibling.value = this.value">
+                <output>8000</output><br>
+                <span><small>Quanto menor o BPS menos tolerante é à lantência, logo é mais provavél a disparar alarmistica</small></span>
+                <span class="text-danger" id="errormsg"></span> <br>
+                <button id="addHostButton" class="form-control btn btn-sm btn-primary" type="button"
+                    style="width:100px">Adicionar</button>
             </div>
         </div>
     </div>
@@ -42,20 +47,21 @@
 
     <script>
         $(document).ready(() => {
-            $('#newhost').keyup( (event) => {
+            $('#newhost').keyup((event) => {
                 if (event.keyCode === 13)
                     $('#addHostButton').click()
             })
             $('#addHostButton').click(() => {
                 data = document.getElementById('newhost').value
-                httpreq = $('#httpreq').find(":selected").attr('id')
-                
+                var select = document.getElementById('hostid')
+                var value = select.options[select.selectedIndex].value
                 $.ajax({
                     url: "/api/v1/addhost",
                     type: "post",
                     data: {
                         "host": data,
-                        "hostid": httpreq
+                        "hostid": value,
+                        "bps": $('#customRange1').val()
                     },
                     success: (results) => {
                         if ("Wrong domain format" != results) {
@@ -63,10 +69,9 @@
                         } else document.getElementById("errormsg").innerHTML = results
                     }
                 })
-
             })
         })
-        
+
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
