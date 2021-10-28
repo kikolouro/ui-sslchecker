@@ -272,7 +272,7 @@ def bulkImport(auth, data, zabbixhost):
         aux = {}
         aux['host'] = host
         if domainValidation(host):
-            temp = addHosts(host, auth, hostid)
+            temp = addHosts(host, auth, hostid, "10000")
             if "error" in temp:
                 aux['message'] = temp
                 aux['status'] = "danger"
