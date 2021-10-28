@@ -258,21 +258,21 @@ def getZabbixHosts(auth):
     return temp
 
 def getZabbixHostidFromName(auth, host):
-    #print(host)
+    print(host)
     temp = ZabbixAPI.do_request(auth, 'host.get', params={ "output": ["hostid"], "filter":{"host": f"{host}"}})['result']
-    #print(temp)
+    print(temp)
     return temp
 
 def bulkImport(auth, data, zabbixhost):
     hosts = data.replace('\r', '').split('\n')
     #print(hosts)
-    hostid = getZabbixHostidFromName(auth, zabbixhost)[0]['hostid']
+    
     output = []
     for host in hosts:
         aux = {}
         aux['host'] = host
         if domainValidation(host):
-            temp = addHosts(host, auth, hostid, "10000")
+            temp = addHosts(host, auth, zabbixhost, "10000")
             if "error" in temp:
                 aux['message'] = temp
                 aux['status'] = "danger"
