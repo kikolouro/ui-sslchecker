@@ -95,8 +95,10 @@ def getData(hostarg="", hosts_file="data.json"):
             var.append(aux)
     return var
 
-def addHosts(host, auth, hostid, filename='data.json'):
-    create_web_scenario(auth, host, f"https://{host}", hostid)
+def addHosts(host, auth, zabbixhost, value, filename='data.json'):
+    hostid = getZabbixHostidFromName(auth, zabbixhost)[0]['hostid']
+    print(hostid)
+    create_web_scenario(auth, host, f"https://{host}", value, hostid)
     with open(filename,'r+') as file:
         file_data = json.load(file)
         if host in file_data:
@@ -203,7 +205,7 @@ def authentication(server_url, credentials):
         return 'Zabbix Server url , user and password are required, try use --help'
 
 
-def create_web_scenario(auth, name, url, hostid=10084, status='200,201,210-299,302'):
+def create_web_scenario(auth, name, url, value=500, hostid=10084, status='200,201,210-299,302'):
     hostname = ZabbixAPI.do_request(auth, 'host.get', params={"filter": {"hostid":hostid}, "output":["host"]})['result'][0]['host']
     request = ZabbixAPI.do_request(auth, 'httptest.get', params={ "filter": {"name": name}})
     if request['result']:
@@ -219,12 +221,12 @@ def create_web_scenario(auth, name, url, hostid=10084, status='200,201,210-299,3
                'url': url,
                'status_codes': status,
                 'no': '1'} ] } )
-            triggers = create_trigger(auth,name, hostname)
+            triggers = create_trigger(auth,name, hostname, value)
         except Exception as e:
             print(e)
 
 
-def create_trigger(auth,name, host):
+def create_trigger(auth,name, host, value):
 
     triggers = auth.trigger.create(description=f"{name} Falhou: {{ITEM.VALUE}}",
     comments="",
@@ -233,7 +235,7 @@ def create_trigger(auth,name, host):
 
     triggers = auth.trigger.create(description=f"{name} está lento: {{ITEM.VALUE}}",
     comments="",
-    expression=f"{{{host}:web.test.in[{name}_cenario,,bps].last()}}<500",
+    expression=f"{{{host}:web.test.in[{name}_cenario,,bps].last()}}<{value}",
     priority=5)
     return triggers
 
@@ -257,7 +259,7 @@ def getZabbixHosts(auth):
 
 def getZabbixHostidFromName(auth, host):
     #print(host)
-    temp = ZabbixAPI.do_request(auth, 'host.get', params={ "output": ["hostid"], "filter":{"name": f"{host}"}})['result']
+    temp = ZabbixAPI.do_request(auth, 'host.get', params={ "output": ["hostid"], "filter":{"host": f"{host}"}})['result']
     #print(temp)
     return temp
 
