@@ -175,8 +175,9 @@ def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
     password = sender['password']
 
     for host in data:
-        if data[host]['pinged']:
-            if data[host]['valid_days_to_expire'] < 15:
+        
+        if data[host]['pinged'] or data[host]['domain_only']:
+            if data[host]['valid_days_to_expire'] < 15 or data[host]['domain']['days_to_expire'] < 30:
 
 
                 message = f"""\
