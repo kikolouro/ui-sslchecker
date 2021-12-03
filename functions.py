@@ -175,14 +175,18 @@ def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
     password = sender['password']
 
     for host in data:
-        if 'domain_only' in data[host]:
+        if 'domain' in data[host]:
             if data[host]['domain']['days_to_expire'] < 30:
                 message = f"""\
                 Subject: Dominio a expirar: {host}
 
                 O Dominio está a expirar no host: {host}. Expira em {data[host]['domain']['days_to_expire']} dias.""".encode('utf-8')
-                SUBJECT = f"Certificado a expirar: {host}"
-                TEXT = f"O certificado está a expirar no host: {host}. Expira em {data[host]['domain']['days_to_expire']} dias."
+                SUBJECT = f"Dominio a expirar: {host}"
+                if data[host]['domain']['provider'] != None:
+                    TEXT = f"O Dominio está a expirar no host: {host}. Expira em {data[host]['domain']['days_to_expire']} dias.\n O provider é: {data[host]['domain']['provider']}"
+                else:
+                    TEXT = f"O Dominio está a expirar no host: {host}. Expira em {data[host]['domain']['days_to_expire']} dias."
+
                 message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
                 context = ssl.create_default_context()
 
