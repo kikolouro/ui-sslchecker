@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificados SSL</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='style.css')}}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</head>
+{% include "navbar.html" %}
+
+<body>
+
+    {% if message | length != 0 %}
+    <div class="toast-container position-absolute top-0 end-0 p-3 right-0">
+        {% for host in message %}
+        <div aria-live="polite" aria-atomic="true">
+            <div class="toast bg-{{host['status']}}" data-autohide="false">
+                <div class="toast-header">
+                    <strong class="mr-auto text-{{host['status']}}">{{host['host']}}</strong>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body">
+                    {{ host['message']}}
+                </div>
+            </div>
+        </div>
+        <script>
+            $('.toast').toast('show')
+        </script>
+        {% endfor %}
+    </div>
+
+
+    {% endif %}
+    <div class="container pt-xl-5" style="width: 80%; height: 80%;">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Dominios - {{ data | length }}</h6>
+                <div id="loadingspinner" class="d-none spinner-border text-primary float-right" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <button href="?" id="runscriptbutton" class="btn btn-primary btn float-right">Refresh</button>
+
+                <input class="form-control mr-sm-2 float-right" id="search"
+                    style="width:auto; margin-right: 2rem !important;" type="search" placeholder="Search"
+                    aria-label="Search">
+
+            </div>
+
+            <div id="hosts"></div>
+            <div id="addhosts" class="container">
+                <div id="showhosts" class="row">
+                    {% for host in data %}
+
+                    {% if host['days_to_expire'] == 200000 %}
+                    {% set aux = 'primary' %}
+                    {% elif host['days_to_expire'] > 50 %}
+                    {% set aux = 'success' %}
+                    {% elif host['days_to_expire'] <= 50 and host['days_to_expire']> 0 %} {% set aux='warning' %} {%
+                        elif host['days_to_expire'] < 0 %} {% set aux='danger' %} {% endif %} <div
+                            class="col-3 mx-auto p-1 kselector" align="center">
+                            <ul class="list-group">
+                                <li class="list-group-item list-group-item-{{ aux }} " style="clear:both">
+                                    {{ host['domain'] }}
+
+                                    {% if host['domain_only'] %}
+                                    <i id="hostcross{{data.index(host)}}" style="color:#8f2214"
+                                        class="bi bi-x-circle"></i><br>
+                                    {% endif %}
+
+
+                                    <div class="container">
+                                        <h6 style="font-size: 0.9rem;">
+                                            <span class="badge badge-{{ aux }} badge-pill">
+                                                {% if host['days_to_expire'] != 200000 %}
+                                                {% if host['days_to_expire'] < 0 %} Expirou à {{ host['days_to_expire']
+                                                    | abs }} dias {% else %} Expira em {{ host['days_to_expire'] }} dias
+                                                    {% endif %} {% else %} Não é possível verificar o dominio {% endif
+                                                    %} </span>
+                                                    {% if host['provider'] == None%}
+                                                    <span class="badge badge-primary badge-pill">Não é possível saber
+                                                        o provider</span>
+                                                    {% else %}
+                                                    <span class="badge badge-{{ aux }} badge-pill">Provider
+                                                        {{host['provider']}}</span>
+                                                    {% endif %}
+
+                                        </h6>
+                                    </div>
+                                </li>
+                                {% if host['domain_only'] %}
+                                <div class="modal fade" id='delete{{data.index(host)}}' tabindex="-1" role="dialog"
+                                    aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="exampleModalLabel">Apagar {{ host["domain"]
+                                                    }}
+                                                </h5>
+                                                <button type="button" class="close" data-dismiss="modal"
+                                                    aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <!-- Alterar -->
+                                            <form id="formdelete{{data.index(host)}}" action="?">
+                                                <div class="modal-body">
+                                                    <input type="text" id="deleteinput{{data.index(host)}}"
+                                                        class="form-control" placeholder="Nome do host a apagar" />
+                                                    <input type="hidden" name="id" value="{{data.index(host)}}" />
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary active"
+                                                        data-dismiss="modal">Voltar atrás</button>
+                                                    <button type="button" id="deletebutton{{data.index(host)}}"
+                                                        class="btn btn-danger" disabled>Apagar {{ host["domain"]
+                                                        }}</button>
+
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <script>
+                                    $('#hostcross{{data.index(host)}}').hover(() => {
+                                        $('#hostcross{{data.index(host)}}').removeClass('bi-x-circle')
+                                        $('#hostcross{{data.index(host)}}').addClass('bi-x-circle-fill')
+                                    }, () => {
+                                        $('#hostcross{{data.index(host)}}').removeClass('bi-x-circle-fill')
+                                        $('#hostcross{{data.index(host)}}').addClass('bi-x-circle')
+                                    })
+
+                                    $('#hostcross{{data.index(host)}}').click(() => {
+                                        $('#delete{{data.index(host)}}').modal()
+                                    })
+                                    $('#deleteinput{{data.index(host)}}').change(() => {
+                                        if ($('#deleteinput{{data.index(host)}}').val() == '{{ host["domain"] }}')
+                                            document.getElementById('deletebutton{{data.index(host)}}').disabled = false
+                                        else
+                                            document.getElementById('deletebutton{{data.index(host)}}').disabled = true
+                                    })
+                                </script>
+                                <script>
+                                    $(document).ready(function () {
+                                        $('#deletebutton{{data.index(host)}}').click(() => {
+                                            data = document.getElementById('deleteinput{{data.index(host)}}').value
+                                            $.ajax({
+                                                url: "/api/v1/deldomain",
+                                                type: "post",
+                                                data: {
+                                                    "host": data
+                                                },
+                                                success: (results) => {
+                                                    window.location.replace("/");
+                                                }
+                                            })
+                                        })
+                                    });
+
+
+                                </script>
+
+                                {% endif %}
+
+
+
+                            </ul>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        $(document).ready(() => {
+            $('#runscriptbutton').click(() => {
+                $("#loadingspinner").addClass('d-inline')
+                $(document.body).css({ 'cursor': 'wait' });
+                $.ajax({
+                    url: "/api/v1/runchecker",
+                    type: "post",
+                    success: (results) => {
+                        location.reload()
+                    }
+                })
+            })
+            $("#search").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                $("#showhosts .kselector").filter(function () {
+                    $(this).toggle($(this).html().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });</script>
+
+</body>
+
+</html>

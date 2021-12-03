@@ -30,7 +30,7 @@
                     </button>
                 </div>
                 <div class="toast-body">
-                   {{ host['message']}} 
+                    {{ host['message']}}
                 </div>
             </div>
         </div>
@@ -39,17 +39,22 @@
         </script>
         {% endfor %}
     </div>
-    
+
 
     {% endif %}
     <div class="container pt-xl-5" style="width: 80%; height: 80%;">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
                 <h6 class="m-0 font-weight-bold text-primary">Hosts - {{ data | length }}</h6>
+                <div id="loadingspinner" class="d-none spinner-border text-primary float-right" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
                 <button href="?" id="runscriptbutton" class="btn btn-primary btn float-right">Refresh</button>
+
                 <input class="form-control mr-sm-2 float-right" id="search"
                     style="width:auto; margin-right: 2rem !important;" type="search" placeholder="Search"
                     aria-label="Search">
+
             </div>
 
             <div id="hosts"></div>
@@ -59,11 +64,13 @@
 
     </div>
 
-    
+
 
     <script>
         $(document).ready(() => {
             $('#runscriptbutton').click(() => {
+                $("#loadingspinner").addClass('d-inline')
+                $(document.body).css({ 'cursor': 'wait' });
                 $.ajax({
                     url: "/api/v1/runchecker",
                     type: "post",
@@ -79,7 +86,7 @@
                 });
             });
         });</script>
-    
+
 </body>
 
 </html>

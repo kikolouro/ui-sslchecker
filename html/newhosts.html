@@ -34,11 +34,26 @@
 
                 </select><br>
                 <label for="customRange1" class="form-label">BPS:</label>
-                <input type="range" min="500" max="15000" class="form-control" step="500" id="customRange1" oninput="this.nextElementSibling.value = this.value">
+                <input type="range" min="500" max="15000" class="form-control" step="500" id="customRange1"
+                    oninput="this.nextElementSibling.value = this.value">
                 <output>8000</output><br>
-                <span><small>Quanto menor o BPS menos tolerante é à lantência, logo é mais provavél a disparar alarmistica</small></span>
+                <span><small>Quanto menor o BPS menos tolerante é à lantência, logo é mais provavél a disparar
+                        alarmistica</small></span>
                 <span class="text-danger" id="errormsg"></span> <br>
                 <button id="addHostButton" class="form-control btn btn-sm btn-primary" type="button"
+                    style="width:100px">Adicionar</button>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid pt-xl-5" style="width: 80%; height: 80%;">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Novo Dominio</h6>
+            </div>
+            <div class="col-6 mx-auto p-3" align="left">
+                <label for="newdomain">Domain:</label> &nbsp
+                <input class="form-control" type="text" id="newdomain" placeholder="Novo Dominio" /><br>
+                <button id="addDomainButton" class="form-control btn btn-sm btn-primary" type="button"
                     style="width:100px">Adicionar</button>
             </div>
         </div>
@@ -47,9 +62,21 @@
 
     <script>
         $(document).ready(() => {
-            $('#newhost').keyup((event) => {
-                if (event.keyCode === 13)
-                    $('#addHostButton').click()
+            $('#addDomainButton').click(() => {
+                data = document.getElementById('newdomain').value
+                $.ajax({
+                    url: "/api/v1/adddomain",
+                    type: "post",
+                    data: {
+                        "domain": data
+                    },
+                    success: (results) => {
+                        if ("Wrong domain format" != results) {
+                            window.location.replace("/");
+                        } else document.getElementById("errormsg").innerHTML = results
+                    }
+                })
+
             })
             $('#addHostButton').click(() => {
                 data = document.getElementById('newhost').value

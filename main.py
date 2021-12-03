@@ -5,6 +5,7 @@ from werkzeug.utils import secure_filename
 import functions
 import os, json, urllib
 import ast
+import domainexpiration
 app = Flask(__name__, template_folder='html')
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, './temp')
 ALLOWED_EXTENSIONS = {'json'}
@@ -57,6 +58,18 @@ def addHost():
             return "Success"
     else:
         return "Wrong domain format"
+
+@app.route("/api/v1/adddomain", methods=['GET', 'POST'])
+def addDomain():
+    domain = request.form['domain']
+    if functions.domainValidation(domain):
+        temp = domainexpiration.addDomain(domain)
+        if "error" in temp:
+            return f"{temp}"
+        else:
+            return "Success"
+    else:
+        return "Wrong domain format"
 # TO BE WORKED
 @app.route("/v1/api/gethostfile")
 def gethostfile():
@@ -101,6 +114,18 @@ def delHost():
         return "Wrong domain format"
 
 
+@app.route("/api/v1/deldomain", methods=['POST'])
+def delDomain():
+    host = request.form['host']
+    if functions.domainValidation(host):
+        temp = domainexpiration.delDomain(host)
+        if "error" in temp:
+            return f"{temp}"
+        else:
+            return "Success"
+    else:
+        return "Wrong domain format"
+
 @app.route("/", methods=['GET', 'POST'])
 def root():
     data = functions.getData()
@@ -111,7 +136,7 @@ def root():
         message = request.args.get('message')
         #message = urllib.parse.unquote(request.args.get('message'))
         e = ast.literal_eval(message)
-        print(e[0])
+        #print(e[0])
         return render_template('index.html', data = data, zabbixdata=zabbixdata, message=e)
     else:
         return render_template('index.html', data = data, zabbixdata=zabbixdata)
@@ -126,3 +151,11 @@ def newhost():
 def debugging():
     return render_template("debugging.html")
 
+@app.route("/domains")
+def domains():
+    data = functions.getData('domain_only')
+    zabbixdata = functions.getZabbixHosts(zabbixauth)
+    data.sort(key = lambda x:x["daystoexpire"])
+    data = domainexpiration.getDomaindata(data)
+    data.sort(key = lambda x:x["days_to_expire"])
+    return render_template("domains.html", data=data)
