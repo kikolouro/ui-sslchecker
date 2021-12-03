@@ -6,3 +6,4 @@ gunicorn
 pyyaml
 flask_basicauth
 py-zabbix
+python-whois

@@ -3,6 +3,7 @@ from yaml.loader import SafeLoader
 from pyzabbix import ZabbixAPI
 from sslchecker import SSLChecker
 import fnmatch
+import domainexpiration
 SSLChecker = SSLChecker()
 
 def readConfig(config_file="config.yaml"):
@@ -31,11 +32,17 @@ def runchecker():
     args = getHosts()
 
     var = {}
+    domains = {}
     var['hosts'] = []
     for host in args:
-        var['hosts'].append(host)
+        if 'domain_only' in args[host]:
+            domains[host] = args[host]
+            continue
+        else:
+            var['hosts'].append(host)
     #print(var)
     res = SSLChecker.show_result(SSLChecker.get_args(json_args=var))
+
     jres = json.loads(res)
     temp = jres
     for host in list(jres):
@@ -43,8 +50,17 @@ def runchecker():
         for arg in var['hosts']:
             if arg not in jres:
                 temp[arg] = {}
+                temp[arg]['host'] = arg
                 temp[arg]['cert_valid'] = False
                 temp[arg]['pinged'] = False
+    for domain in domains:
+        temp[domain] = domains[domain]
+    domainlist = domainexpiration.getDomains(getData('domain_only'))
+    #print(domainlist)
+    dnsdata = domainexpiration.domainExpiration(domainlist)
+
+    temp = domainexpiration.mixCheckerDomain(temp, dnsdata)
+
     with open('data.json', 'w') as file:
         file.seek(0)
         json.dump(temp, file, indent = 4)
@@ -69,13 +85,17 @@ def runcheckerupload(args):
 
 def runsinglechecker(host):
     res = SSLChecker.show_result(SSLChecker.get_args(json_args={"hosts": [host]}))
+    domainlist = domainexpiration.getDomains(host)
+    dnsdata = domainexpiration.domainExpiration(domainlist)
+
+    res = domainexpiration.mixCheckerDomain(res, dnsdata)
     return json.loads(res)
 
 def getData(hostarg="", hosts_file="data.json"):
     json_file = open(hosts_file)
     hosts = json.load(json_file)
     json_file.close()
-    if hostarg != "":
+    if hostarg != "" and hostarg != "domain_only":
         reg = f"*{hostarg}*"
     else:
         reg = "*"
@@ -84,20 +104,30 @@ def getData(hostarg="", hosts_file="data.json"):
     for host in hosts:
         match = fnmatch.fnmatch(host, reg)
         if match:
+            if hostarg != 'domain_only':
+                if 'domain_only' in hosts[host]:
+                    #print(hosts[host])
+                    continue
             aux = {}
             aux['host'] = host
             aux['cert'] = hosts[host]['cert_valid']
+            #print(hosts[host])
+            
             if hosts[host]['pinged'] == True:
                 aux['daystoexpire'] = hosts[host]['valid_days_to_expire']
             else:
                 aux['daystoexpire'] = -10000
             aux['pinged'] = hosts[host]['pinged']
+            if 'domain' in hosts[host]:
+                aux['dns'] = hosts[host]['domain']
+                aux['dns']['domain_only'] = True if 'domain_only' in hosts[host] else False
+
             var.append(aux)
     return var
 
 def addHosts(host, auth, zabbixhost, value, filename='data.json'):
     hostid = getZabbixHostidFromName(auth, zabbixhost)[0]['hostid']
-    print(hostid)
+    
     create_web_scenario(auth, host, f"https://{host}", value, hostid)
     with open(filename,'r+') as file:
         file_data = json.load(file)
@@ -258,9 +288,9 @@ def getZabbixHosts(auth):
     return temp
 
 def getZabbixHostidFromName(auth, host):
-    print(host)
+    #print(host)
     temp = ZabbixAPI.do_request(auth, 'host.get', params={ "output": ["hostid"], "filter":{"host": f"{host}"}})['result']
-    print(temp)
+    #print(temp)
     return temp
 
 def bulkImport(auth, data, zabbixhost):

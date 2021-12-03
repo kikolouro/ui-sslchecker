@@ -21,8 +21,13 @@
     <div class="container-fluid pt-xl-5" style="width: 80%; height: 80%;">
         <div class="card shadow mb-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary" style="display:inline;">Central de Debugging</h6> <button href="?" id="runscriptbutton" class="btn btn-primary btn-sm float-right">Correr Script</button>
+                <div id="loadingspinner" class="d-none spinner-border text-primary float-right" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <h6 class="m-0 font-weight-bold text-primary" style="display:inline;">Central de Debugging</h6> <button
+                    href="?" id="runscriptbutton" class="btn btn-primary btn-sm float-right">Correr Script</button>
             </div>
+
             <div class="p-2">
                 <h1 class="m-0 font-weight-bold" style="text-align: center;">Output</h1><br>
                 <pre id="textarea" readonly></pre>
@@ -37,7 +42,7 @@
 
         function syntaxHighlight(json) {
             json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
                 var cls = 'number';
                 if (/^"/.test(match)) {
                     if (/:$/.test(match)) {
@@ -59,12 +64,14 @@
 
         $(document).ready(() => {
             $('#runscriptbutton').click(() => {
+                $("#loadingspinner").addClass('d-inline')
                 $.ajax({
                     url: "/api/v1/runchecker",
                     type: "post",
                     success: (results) => {
                         //document.getElementById("textarea").textContent = results;
                         v = JSON.stringify(results, undefined, 4)
+                        $("#loadingspinner").removeClass('d-inline')
                         output(v);
                         output(syntaxHighlight(v));
                     }
