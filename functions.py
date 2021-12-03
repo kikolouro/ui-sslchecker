@@ -173,19 +173,20 @@ def domainValidation(domain):
 def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
     sender_email = sender['email']
     password = sender['password']
-
+    already = []
     for host in data:
-        if 'domain' in data[host]:
+        if 'domain' in data[host] and data[host]['domain']['domain'] not in already:
             if data[host]['domain']['days_to_expire'] < 30:
+                already.append(data[host]['domain']['domain'])
                 message = f"""\
-                Subject: Dominio a expirar: {host}
+                Subject: Dominio a expirar: {data[host]['domain']['domain']}
 
-                O Dominio está a expirar no host: {host}. Expira em {data[host]['domain']['days_to_expire']} dias.""".encode('utf-8')
-                SUBJECT = f"Dominio a expirar: {host}"
+                O Dominio está a expirar no host: {data[host]['domain']['domain']}. Expira em {data[host]['domain']['days_to_expire']} dias.""".encode('utf-8')
+                SUBJECT = f"Dominio a expirar: {data[host]['domain']['domain']}"
                 if data[host]['domain']['provider'] != None:
-                    TEXT = f"O Dominio está a expirar no host: {host}. Expira em {data[host]['domain']['days_to_expire']} dias.\n O provider é: {data[host]['domain']['provider']}"
+                    TEXT = f"O Dominio está a expirar no host: {data[host]['domain']['domain']}. Expira em {data[host]['domain']['days_to_expire']} dias.\n O provider é: {data[host]['domain']['provider']}"
                 else:
-                    TEXT = f"O Dominio está a expirar no host: {host}. Expira em {data[host]['domain']['days_to_expire']} dias."
+                    TEXT = f"O Dominio está a expirar no host: {data[host]['domain']['domain']}. Expira em {data[host]['domain']['days_to_expire']} dias."
 
                 message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
                 context = ssl.create_default_context()
