@@ -129,7 +129,7 @@ def getData(hostarg="", hosts_file="data.json"):
 def addHosts(host, auth, zabbixhost, value, filename='data.json'):
     hostid = getZabbixHostidFromName(auth, zabbixhost)[0]['hostid']
     
-    #create_web_scenario(auth, host, f"https://{host}", value, hostid)
+    create_web_scenario(auth, host, f"https://{host}", value, hostid)
     with open(filename,'r+') as file:
         file_data = json.load(file)
         if host in file_data:
