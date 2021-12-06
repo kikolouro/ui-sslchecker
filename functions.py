@@ -85,11 +85,12 @@ def runcheckerupload(args):
 
 def runsinglechecker(host):
     res = SSLChecker.show_result(SSLChecker.get_args(json_args={"hosts": [host]}))
-    domainlist = domainexpiration.getDomains(host)
+    domainlist = domainexpiration.getDomains([host])
     dnsdata = domainexpiration.domainExpiration(domainlist)
 
-    res = domainexpiration.mixCheckerDomain(res, dnsdata)
-    return json.loads(res)
+    #print(type(res))
+    res = domainexpiration.mixCheckerDomain(json.loads(res), dnsdata)
+    return res
 
 def getData(hostarg="", hosts_file="data.json"):
     json_file = open(hosts_file)
@@ -128,7 +129,7 @@ def getData(hostarg="", hosts_file="data.json"):
 def addHosts(host, auth, zabbixhost, value, filename='data.json'):
     hostid = getZabbixHostidFromName(auth, zabbixhost)[0]['hostid']
     
-    create_web_scenario(auth, host, f"https://{host}", value, hostid)
+    #create_web_scenario(auth, host, f"https://{host}", value, hostid)
     with open(filename,'r+') as file:
         file_data = json.load(file)
         if host in file_data:
@@ -282,10 +283,6 @@ def create_trigger(auth,name, host, value):
     expression=f"{{{host}:web.test.error[{name}_cenario].strlen()}}>0 and {{{host}:web.test.fail[{name}_cenario].last()}}>0",
     priority=5)
 
-    triggers = auth.trigger.create(description=f"{name} está lento: {{ITEM.VALUE}}",
-    comments="",
-    expression=f"{{{host}:web.test.in[{name}_cenario,,bps].last()}}<{value}",
-    priority=5)
     return triggers
 
 def getScenarioID(auth, host):
