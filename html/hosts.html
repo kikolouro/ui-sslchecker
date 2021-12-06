@@ -20,6 +20,15 @@
                                 {% if host['daystoexpire'] < 0 %} Expirou à {{ host['daystoexpire'] | abs }} dias {%
                                     else %} Expira em {{ host['daystoexpire'] }} dias {% endif %} {% else %} Não é
                                     possível contactar o webserver {% endif %} </span>
+                                    {% if host['lets'] %}
+                                    <span class="badge badge-dark badge-pill">Certificado Let's Encrypt</span>
+                                    {% endif %}
+                                    {% if host['wildcard'] %}
+                                    <span class="badge badge-light badge-pill">Certificado Wildcard</span>
+                                    {% endif %}
+                                    <span class="badge badge-info badge-pill">{{host['certinfo']}}</span>
+
+
                         </h6>
                     </div>
                     </li>

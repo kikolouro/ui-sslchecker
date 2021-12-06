@@ -113,16 +113,27 @@ def getData(hostarg="", hosts_file="data.json"):
             aux['host'] = host
             aux['cert'] = hosts[host]['cert_valid']
             #print(hosts[host])
-            
+            #print(hosts[host])
             if hosts[host]['pinged'] == True:
                 aux['daystoexpire'] = hosts[host]['valid_days_to_expire']
+                aux['certinfo'] = f"Issued to {hosts[host]['issued_to']}"
+                if "Let's Encrypt" in hosts[host]['issuer_o']:
+                    aux['lets'] = True
+                else:
+                    aux['lets'] = False
+                if "*" in hosts[host]['issued_to']:
+                    aux['wildcard'] = True
+                else:
+                    aux['wildcard'] = False
+
             else:
                 aux['daystoexpire'] = -10000
             aux['pinged'] = hosts[host]['pinged']
             if 'domain' in hosts[host]:
                 aux['dns'] = hosts[host]['domain']
                 aux['dns']['domain_only'] = True if 'domain_only' in hosts[host] else False
-
+            
+            
             var.append(aux)
     return var
 
