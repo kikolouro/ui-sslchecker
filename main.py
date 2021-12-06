@@ -30,7 +30,7 @@ def upload():
     if len(data) == 0:
         return "Erro: Não pode ficar vazio" 
     message = functions.bulkImport(zabbixauth, data, hostid)
-    print(json.dumps(message))
+    #print(json.dumps(message))
     #request.form.add('message', message)
     
     return redirect(f'/?message={urllib.parse.quote(str(message))}', code=307)
@@ -49,7 +49,7 @@ def addHost():
     host = request.form['host']
     hostid = request.form['hostid']
     value = request.form['bps']
-    print(value)
+    #print(value)
     if functions.domainValidation(host):
         temp = functions.addHosts(host, zabbixauth, hostid, value)
         if "error" in temp:

@@ -11,14 +11,19 @@ def getDomains(data):
         #print(host['host'])
         regex = '([a-z0-9\-]+)\.([a-z]+|[a-z]{2}\.[a-z]+)$'
         r = re.compile(regex)
-        aux = r.search(f"{host['host']}")
+        #print(host)
+        if len(data) > 1:
+            aux = r.search(f"{host['host']}")
+        else:
+            aux = r.search(f"{host}")
+
         temp.append(f"{aux.group(1)}.{aux.group(2)}")
     
     res = []
     for i in temp:
         if i not in res:
             res.append(i)
-    print(res)
+    #print(res)
     return res
 
 def getsingleDomain(data):
@@ -102,7 +107,9 @@ def delDomain(domain, filename='data.json'):
 def mixCheckerDomain(checker, domain):
     temp = {}
     already = []
+    #print(checker)
     for host in checker:
+        #print(host)
         host = checker[host]
         temp[host['host']] = host
         for dns in domain:
