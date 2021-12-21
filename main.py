@@ -69,8 +69,7 @@ def addHost():
 def gethostfile():
     uploads = os.path.join(app.root_path, './temp')
     with open('temp/hosts.json', 'w') as file:
-        temp = {}
-        temp['hosts'] = []
+        temp = {'hosts': []}
         data = functions.getData()
         for host in data:
             temp['hosts'].append(host)
@@ -81,7 +80,7 @@ def gethostfile():
 @app.route("/api/v1/gethosts")
 def getHosts():
     host = request.args.get('host')
-    if host == None:
+    if host is None:
         return functions.getHosts()
     else:
         return functions.getHosts(host)
@@ -89,7 +88,7 @@ def getHosts():
 @app.route("/api/v1/getdata")
 def getData():
     host = request.args.get('host')
-    if host == None:
+    if host is None:
         return functions.getData()
     else:
         return functions.getData(host)
@@ -97,15 +96,14 @@ def getData():
 @app.route("/api/v1/delhost", methods=['POST'])
 def delHost():
     host = request.form['host']
-    if functions.domainValidation(host):
-        temp = functions.delHost(host)
-        functions.delete_web_scenario(zabbixauth, host)
-        if "error" in temp:
-            return f"{temp}"
-        else:
-            return "Success"
-    else:
+    if not functions.domainValidation(host):
         return "Wrong domain format"
+    temp = functions.delHost(host)
+    functions.delete_web_scenario(zabbixauth, host)
+    if "error" in temp:
+        return f"{temp}"
+    else:
+        return "Success"
 
 
 @app.route("/")
