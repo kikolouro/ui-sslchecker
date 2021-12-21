@@ -62,21 +62,19 @@ def addHost():
 @app.route("/api/v1/adddomain", methods=['GET', 'POST'])
 def addDomain():
     domain = request.form['domain']
-    if functions.domainValidation(domain):
-        temp = domainexpiration.addDomain(domain)
-        if "error" in temp:
-            return f"{temp}"
-        else:
-            return "Success"
-    else:
+    if not functions.domainValidation(domain):
         return "Wrong domain format"
+    temp = domainexpiration.addDomain(domain)
+    if "error" in temp:
+        return f"{temp}"
+    else:
+        return "Success"
 # TO BE WORKED
 @app.route("/v1/api/gethostfile")
 def gethostfile():
     uploads = os.path.join(app.root_path, './temp')
     with open('temp/hosts.json', 'w') as file:
-        temp = {}
-        temp['hosts'] = []
+        temp = {'hosts': []}
         data = functions.getData()
         for host in data:
             temp['hosts'].append(host)
@@ -87,7 +85,7 @@ def gethostfile():
 @app.route("/api/v1/gethosts")
 def getHosts():
     host = request.args.get('host')
-    if host == None:
+    if host is None:
         return functions.getHosts()
     else:
         return functions.getHosts(host)
@@ -95,7 +93,7 @@ def getHosts():
 @app.route("/api/v1/getdata")
 def getData():
     host = request.args.get('host')
-    if host == None:
+    if host is None:
         return functions.getData()
     else:
         return functions.getData(host)
@@ -103,43 +101,40 @@ def getData():
 @app.route("/api/v1/delhost", methods=['POST'])
 def delHost():
     host = request.form['host']
-    if functions.domainValidation(host):
-        temp = functions.delHost(host)
-        functions.delete_web_scenario(zabbixauth, host)
-        if "error" in temp:
-            return f"{temp}"
-        else:
-            return "Success"
-    else:
+    if not functions.domainValidation(host):
         return "Wrong domain format"
+    temp = functions.delHost(host)
+    functions.delete_web_scenario(zabbixauth, host)
+    if "error" in temp:
+        return f"{temp}"
+    else:
+        return "Success"
 
 
 @app.route("/api/v1/deldomain", methods=['POST'])
 def delDomain():
     host = request.form['host']
-    if functions.domainValidation(host):
-        temp = domainexpiration.delDomain(host)
-        if "error" in temp:
-            return f"{temp}"
-        else:
-            return "Success"
-    else:
+    if not functions.domainValidation(host):
         return "Wrong domain format"
+    temp = domainexpiration.delDomain(host)
+    if "error" in temp:
+        return f"{temp}"
+    else:
+        return "Success"
 
 @app.route("/", methods=['GET', 'POST'])
 def root():
     data = functions.getData()
     zabbixdata = functions.getZabbixHosts(zabbixauth)
     data.sort(key = lambda x:x["daystoexpire"])
-    
-    if request.args.get('message') != None:
-        message = request.args.get('message')
-        #message = urllib.parse.unquote(request.args.get('message'))
-        e = ast.literal_eval(message)
-        #print(e[0])
-        return render_template('index.html', data = data, zabbixdata=zabbixdata, message=e)
-    else:
+
+    if request.args.get('message') is None:
         return render_template('index.html', data = data, zabbixdata=zabbixdata)
+    message = request.args.get('message')
+    #message = urllib.parse.unquote(request.args.get('message'))
+    e = ast.literal_eval(message)
+    #print(e[0])
+    return render_template('index.html', data = data, zabbixdata=zabbixdata, message=e)
     
 
 @app.route("/newhosts")

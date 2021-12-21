@@ -7,18 +7,14 @@ now = datetime.now()
 
 def getDomains(data):
     temp = []
+    #print(host['host'])
+    regex = '([a-z0-9\-]+)\.([a-z]+|[a-z]{2}\.[a-z]+)$'
     for host in data:
-        #print(host['host'])
-        regex = '([a-z0-9\-]+)\.([a-z]+|[a-z]{2}\.[a-z]+)$'
         r = re.compile(regex)
         #print(host)
-        if len(data) > 1:
-            aux = r.search(f"{host['host']}")
-        else:
-            aux = r.search(f"{host}")
-
+        aux = r.search(f"{host['host']}") if len(data) > 1 else r.search(f"{host}")
         temp.append(f"{aux.group(1)}.{aux.group(2)}")
-    
+
     res = []
     for i in temp:
         if i not in res:
@@ -43,16 +39,15 @@ def domainExpiration(domainlist):
         try:
             temp = {}
             w = whois.whois(domain)
-            if w.domain_name == None:
+            if w.domain_name is None:
                 temp['domain'] = domain
                 temp['days_to_expire'] = 200000
                 temp['domain_expiration_date'] = None
                 temp['provider'] = None
-                res.append(json.dumps(temp))
             else:
-                if not type(w.expiration_date) == list:        
+                if type(w.expiration_date) != list:        
                     domain_expiration_date = str(w.expiration_date.day) + '/' + str(w.expiration_date.month) + '/' + str(w.expiration_date.year)
-                    timedelta = w.expiration_date - now 
+                    timedelta = w.expiration_date - now
                 else:
                     domain_expiration_date = str(min(w.expiration_date).day) + '/' + str(min(w.expiration_date).month) + '/' + str(min(w.expiration_date).year)
                     #print("LIST")
@@ -62,8 +57,7 @@ def domainExpiration(domainlist):
                 temp['days_to_expire'] = days_to_expire
                 temp['domain_expiration_date'] = domain_expiration_date
                 temp['provider'] = w.whois_server
-                res.append(json.dumps(temp))
-                    
+            res.append(json.dumps(temp))
         except Exception as e:
             continue
     return res
@@ -114,10 +108,9 @@ def mixCheckerDomain(checker, domain):
         temp[host['host']] = host
         for dns in domain:
             dns = json.loads(dns)
-            if dns['domain'] not in already:
-                if dns['domain'] in host['host']:
-                    temp[host['host']]['domain'] = dns
-                    already.append(host['host']) 
+            if dns['domain'] not in already and dns['domain'] in host['host']:
+                temp[host['host']]['domain'] = dns
+                already.append(host['host'])
     return temp
 
 
@@ -125,11 +118,13 @@ def getDomaindata(data):
     temp = []
     already = []
     for host in data:
-        if 'domain' in json.dumps(host):
-            if host['dns']['domain'] not in already:
-                if 'domain_only' in host:
-                    host['dns']['domain_only'] = True
-                #print(host)
-                temp.append(host['dns'])
-                already.append(host['dns']['domain'])
+        if (
+            'domain' in json.dumps(host)
+            and host['dns']['domain'] not in already
+        ):
+            if 'domain_only' in host:
+                host['dns']['domain_only'] = True
+            #print(host)
+            temp.append(host['dns'])
+            already.append(host['dns']['domain'])
     return temp
