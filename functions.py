@@ -11,13 +11,9 @@ def readConfig(config_file="config.yaml"):
     return data
 
 def getHosts(host="", hosts_file="data.json"):
-    json_file = open(hosts_file)
-    var = json.load(json_file)
-    json_file.close()
-    if host != "":
-        reg = f"*{host}*"
-    else:
-        reg = "*"
+    with open(hosts_file) as json_file:
+        var = json.load(json_file)
+    reg = f"*{host}*" if host != "" else "*"
     temp = {}
     #print(type(var))
     for obj in var:
@@ -30,8 +26,7 @@ def getHosts(host="", hosts_file="data.json"):
 def runchecker():
     args = getHosts()
 
-    var = {}
-    var['hosts'] = []
+    var = {'hosts': []}
     for host in args:
         var['hosts'].append(host)
     #print(var)
@@ -42,9 +37,7 @@ def runchecker():
         temp[host]['pinged'] = True
         for arg in var['hosts']:
             if arg not in jres:
-                temp[arg] = {}
-                temp[arg]['cert_valid'] = False
-                temp[arg]['pinged'] = False
+                temp[arg] = {'cert_valid': False, 'pinged': False}
     with open('data.json', 'w') as file:
         file.seek(0)
         json.dump(temp, file, indent = 4)
@@ -59,9 +52,7 @@ def runcheckerupload(args):
         temp[host]['pinged'] = True
         for arg in args['hosts']:
             if arg not in jres:
-                temp[arg] = {}
-                temp[arg]['cert_valid'] = False
-                temp[arg]['pinged'] = False
+                temp[arg] = {'cert_valid': False, 'pinged': False}
     with open('data.json', 'w') as file:
         file.seek(0)
         json.dump(temp, file, indent = 4)
@@ -72,26 +63,22 @@ def runsinglechecker(host):
     return json.loads(res)
 
 def getData(hostarg="", hosts_file="data.json"):
-    json_file = open(hosts_file)
-    hosts = json.load(json_file)
-    json_file.close()
-    if hostarg != "":
-        reg = f"*{hostarg}*"
-    else:
-        reg = "*"
-
+    with open(hosts_file) as json_file:
+        hosts = json.load(json_file)
+    reg = f"*{hostarg}*" if hostarg != "" else "*"
     var = []
     for host in hosts:
         match = fnmatch.fnmatch(host, reg)
         if match:
-            aux = {}
-            aux['host'] = host
-            aux['cert'] = hosts[host]['cert_valid']
-            if hosts[host]['pinged'] == True:
-                aux['daystoexpire'] = hosts[host]['valid_days_to_expire']
-            else:
-                aux['daystoexpire'] = -10000
-            aux['pinged'] = hosts[host]['pinged']
+            aux = {
+                'host': host,
+                'cert': hosts[host]['cert_valid'],
+                'daystoexpire': hosts[host]['valid_days_to_expire']
+                if hosts[host]['pinged'] == True
+                else -10000,
+                'pinged': hosts[host]['pinged'],
+            }
+
             var.append(aux)
     return var
 
@@ -131,34 +118,30 @@ def delHost(host, filename='data.json'):
 
 
 def domainValidation(domain):
-    regex = '^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$'
     if type(domain) == str:
-        if re.search(regex, f"{domain}"):
-            return True
-        else:
-            return False
+        regex = '^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$'
+        return bool(re.search(regex, f"{domain}"))
 
 def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
     sender_email = sender['email']
     password = sender['password']
 
     for host in data:
-        if data[host]['pinged']:
-            if data[host]['valid_days_to_expire'] < 15:
+        if data[host]['pinged'] and data[host]['valid_days_to_expire'] < 15:
 
 
-                message = f"""\
+            message = f"""\
                 Subject: Certificado a expirar: {host}
 
                 O certificado está a expirar no host: {host}. Expira em {data[host]['valid_days_to_expire']} dias.""".encode('utf-8')
-                SUBJECT = f"Certificado a expirar: {host}"
-                TEXT = f"O certificado está a expirar no host: {host}. Expira em {data[host]['valid_days_to_expire']} dias."
-                message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
-                context = ssl.create_default_context()
+            SUBJECT = f"Certificado a expirar: {host}"
+            TEXT = f"O certificado está a expirar no host: {host}. Expira em {data[host]['valid_days_to_expire']} dias."
+            message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
+            context = ssl.create_default_context()
 
-                with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
-                    server.login(sender_email, password)
-                    server.sendmail(sender_email, receiver, message.encode('utf-8'))
+            with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver, message.encode('utf-8'))
     return "Success"
 
 def allowed_file(filename, ALLOWED_EXTENSIONS):
@@ -166,16 +149,14 @@ def allowed_file(filename, ALLOWED_EXTENSIONS):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def jsonfileValidation(obj):
-    if 'hosts' not in obj:
-        return False
-    return True
+    return 'hosts' in obj
 
 def changeHostFile(obj, filename='data.json'):
     if jsonfileValidation(obj):
         open(filename, 'w').close()
         with open(filename, 'w') as File:
             json.dump(runcheckerupload(obj), File, indent = 4)
-        filelist = [ f for f in os.listdir('temp')]
+        filelist = list(os.listdir('temp'))
         for f in filelist:
             os.remove(os.path.join('temp', f))
         return "Success"
@@ -208,20 +189,19 @@ def create_web_scenario(auth, name, url, hostid=10084, status='200,201,210-299,3
     request = ZabbixAPI.do_request(auth, 'httptest.get', params={ "filter": {"name": name}})
     if request['result']:
         return f'Host {name} already registered'
-    else:
-        try:
-            ZabbixAPI.do_request(auth, 'httptest.create',
-            params={"name": f"{name}_cenario",
-            "hostid": hostid,
-             "delay": '60',
-             "retries": '3',
-              "steps": [ { 'name': url,
-               'url': url,
-               'status_codes': status,
-                'no': '1'} ] } )
-            triggers = create_trigger(auth,name, hostname)
-        except Exception as e:
-            print(e)
+    try:
+        ZabbixAPI.do_request(auth, 'httptest.create',
+        params={"name": f"{name}_cenario",
+        "hostid": hostid,
+         "delay": '60',
+         "retries": '3',
+          "steps": [ { 'name': url,
+           'url': url,
+           'status_codes': status,
+            'no': '1'} ] } )
+        triggers = create_trigger(auth,name, hostname)
+    except Exception as e:
+        print(e)
 
 
 def create_trigger(auth,name, host):
@@ -239,10 +219,7 @@ def create_trigger(auth,name, host):
 
 def getScenarioID(auth, host):
     temp = ZabbixAPI.do_request(auth, 'httptest.get', params={ "filter": {"name": f"{host}_cenario"}})['result']
-    request = []
-    for req in temp:
-        request.append(req['httptestid'])
-    return request
+    return [req['httptestid'] for req in temp]
 
 
 def delete_web_scenario(auth, host):
