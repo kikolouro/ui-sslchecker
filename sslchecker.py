@@ -112,7 +112,7 @@ class SSLChecker:
         """
         san = ''
         ext_count = x509cert.get_extension_count()
-        for i in range(0, ext_count):
+        for i in range(ext_count):
             ext = x509cert.get_extension(i)
             if 'subjectAltName' in str(ext.get_short_name()):
                 san = ext.__str__()
@@ -139,7 +139,7 @@ class SSLChecker:
         context['cert_ver'] = cert.get_version()
         context['cert_sans'] = self.get_cert_sans(cert)
         context['cert_exp'] = cert.has_expired()
-        context['cert_valid'] = False if cert.has_expired() else True
+        context['cert_valid'] = not cert.has_expired()
 
         # Valid from
         valid_from = datetime.strptime(cert.get_notBefore().decode('ascii'),
@@ -161,12 +161,6 @@ class SSLChecker:
         # Valid days left
         context['valid_days_to_expire'] = (datetime.strptime(context['valid_till'],
                                                              '%Y-%m-%d') - datetime.now()).days
-        #print("banana")
-
-        if context['valid_days_to_expire'] < notification_days:
-            pass
-            #SendEmail(context['host'], context['valid_days_to_expire'],)
-
         if cert.has_expired():
             self.total_expired += 1
         else:
@@ -240,7 +234,7 @@ class SSLChecker:
             host, port = self.filter_hostname(host)
 
             # Check duplication
-            if host in context.keys():
+            if host in context:
                 continue
 
             try:
@@ -383,7 +377,7 @@ class SSLChecker:
                             help='Show this help message and exit')
 
         args = parser.parse_args()
-        
+
         if args.db:
             pw = "PASSWORD"
             import mysql.connector
@@ -399,25 +393,20 @@ class SSLChecker:
             mycursor.execute(sql)
 
             myresult = mycursor.fetchall()
-            array = []
-            for x in range(len(myresult)):
-                array.append(myresult[x][0])
+            array = [myresult[x][0] for x in range(len(myresult))]
             args.hosts = array
-            
-        # Get hosts from file if provided
-        else:
-            if args.host_file:
-                with open(args.host_file) as f:
-                    args.hosts = f.read().splitlines()
-                print(args.hosts)
-                exit()
-            
-        
+
+        elif args.host_file:
+            with open(args.host_file) as f:
+                args.hosts = f.read().splitlines()
+            print(args.hosts)
+            exit()
+
+
         # Checks hosts list
-        if isinstance(args.hosts, list):
-            if len(args.hosts) == 0:
-                parser.print_help()
-                sys.exit(0)
+        if isinstance(args.hosts, list) and len(args.hosts) == 0:
+            parser.print_help()
+            sys.exit(0)
 
         return args
 
