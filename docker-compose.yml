@@ -4,7 +4,9 @@ services:
         build: 
           context: '.'
         container_name: sslchecker
-        volumes: ['./:/app']
+        volumes: 
+          - ./:/app
+          - /etc/apache2/certificates/:/certs
         restart: always
         ports: 
           - "8000:5000"
