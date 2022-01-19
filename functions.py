@@ -1,9 +1,11 @@
+from curses.ascii import SUB
 import json, re, yaml, os, smtplib, ssl
 from yaml.loader import SafeLoader
 from pyzabbix import ZabbixAPI
 from sslchecker import SSLChecker
 import fnmatch
 import domainexpiration
+import requests
 SSLChecker = SSLChecker()
 
 def readConfig(config_file="config.yaml"):
@@ -162,6 +164,7 @@ def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
     sender_email = sender['email']
     password = sender['password']
     already = []
+    url = 'https://infosistema.webhook.office.com/webhookb2/3e386bd2-de1b-487d-b94e-f4fa057e6c1a@7f64df34-1d7b-4dce-9ca3-d683621eee67/IncomingWebhook/f7d392f0ef344a959deec314286018e7/e916be5e-b5e4-469c-a32d-47df970ecb88'
     for host in data:
         if (
             'domain' in data[host]
@@ -169,6 +172,7 @@ def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
             and data[host]['domain']['days_to_expire'] < 30
         ):
             already.append(data[host]['domain']['domain'])
+            msteams = f"O Dominio está a expirar no host: {data[host]['domain']['domain']}. Expira em {data[host]['domain']['days_to_expire']} dias."
             message = f"""\
                 Subject: Dominio a expirar: {data[host]['domain']['domain']}
 
@@ -179,15 +183,17 @@ def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
 
             else:
                 TEXT = f"O Dominio está a expirar no host: {data[host]['domain']['domain']}. Expira em {data[host]['domain']['days_to_expire']} dias.\n O provider é: {data[host]['domain']['provider']}"
+                msteams = f"O Dominio está a expirar no host: {data[host]['domain']['domain']}. Expira em {data[host]['domain']['days_to_expire']} dias.\n O provider é: {data[host]['domain']['provider']}"
             message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
             context = ssl.create_default_context()
-
+            
             with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
                 server.login(sender_email, password)
+                requests.post(url, json={"text": f"{msteams}"})
                 server.sendmail(sender_email, receiver, message.encode('utf-8'))
         if data[host]['pinged'] and data[host]['valid_days_to_expire'] < 15:
 
-
+            msteams = f"O certificado está a expirar no host: {host}. Expira em {data[host]['valid_days_to_expire']} dias."
             message = f"""\
                 Subject: Certificado a expirar: {host}
 
@@ -199,6 +205,7 @@ def sendEmail(receiver, sender, data, port=465, smtpserver='smtp.gmail.com'):
 
             with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
                 server.login(sender_email, password)
+                requests.post(url, json={"text": f"{msteams}"})
                 server.sendmail(sender_email, receiver, message.encode('utf-8'))
     return "Success"
 
